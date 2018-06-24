@@ -132,7 +132,7 @@
 * validation is also known as mining
 * so when the transactions in a node get assembled into the block the node starts running some 
 
-### Lecture 12 - Basic Blockchains (Crash Course by Anders Brownworth)
+### Lecture 13 - Basic Blockchains (Crash Course by Anders Brownworth)
 
 * we start by looking into SHA256 hash. a hash looks like a bunch of random numbers
 * a hash can be produced by a stream of data. whenever there is any change on the byte stream. hash changes. if i erase and retype the same bytestream thehash is the same
@@ -165,7 +165,7 @@
 * it is good for small data like transactions
 * it established aggreement on what has happened in the past (immutable history)
 
-### Lecture 12 - Part2: Public/Private Keys and Signing
+### Lecture 13 - Part2: Public/Private Keys and Signing
 
 * what we saw before is how blockchain works in the financial context. (transctions that move money from one to another)
 * the problem that arises is how to stop someone from adding a transaction that spends money from another user by sending them to someone else
@@ -181,6 +181,33 @@
 * changing anything in the transaction breaks the block and the transaction signature. remining the block doesnt help it as the block is fixed but the signature does not. only the original sender can change it!
 * anyone can make a private/public key for himself. there is no need for a centralized authority
 
-### Lecture 13 - Block Time
+### Lecture 14 - Block Time
 
 * the definition in the previous video is of a generic general use blockchain
+* in previous lecture mining was linked with looking for a hash with leading zeroes
+* this is not 100% correct
+* in previous lecture we said that accounts are represented with an address a public and private key all in hex
+* if we convert the block hash to decimal (in 10^72). less than a typical SHA256 hash that is 10^76. so in reality we are looking not for a hash with leading zeroes buth a hash less than a target value. to do it keeping the data unchanged the key is in the nonce value
+* the blockchain hashes are 64 characters long so they range from 0 to 1.15x10^77
+* the complexity of the algorithm is something like giving 64 16sided dices and tell you yo roll till wou get a value less than 100. this means rolling over and over again (rehashing)
+* this is why mining (rehashing) takes so much time. this time is called block time
+* this explains the wait of time to validate a transaction. these 30secs is block time + distribution time of block to other nodes
+* ethereum network has a blocktime of 15seconds. so in a perfect world a block would take 15secs and the the network would go on to calculate the next block (next set of transactions)
+* what actually happens is that a new target value for the hashes is adjusted after every single block calculation. if the previous took so long it will lower the difficulty. if it was too easy it will raise the difficulty of the target
+* the hash is calculated by the whole network. that explains the adjustments on the target. as the number of nodes and their processing power is always in flux the ability to solve the hashing problem varies over time [demo](etherscan.io/chart/blocktime)
+
+### Lecture 15 - Smart Contracts
+
+* a short definition of a smart contract is an ethereum account controlled by code and not by a human
+* the code dicates the smart contract how to behave
+* a smart contract has the properties of a human account (nonce, keys, address)
+* the extra properties in a smart contract account are:
+	* balance: amount of ether this account owns
+	* storage: data storage for this contract (app related data, small amount of data)
+	* code: raw machine code for this contract (machine level compiled code)
+* the smart contract knows what it has to do (based on the code)
+* the acounts we create in metamask are called external accounts (owned by humans) and are decoupled from ethereum networks
+* the contract accounts containing the smart contract are network specific (not accessible from othern networks)
+* in our dev machine we author some code that serve as a contracts source(dictates how it should behave and how to spend money)
+* we then take the contract code and deploy it to a network. an instance of the contract is created in the network (contract account)
+* a contract code can be deployed multiple times (multiple instances) to one network or multiple networks (class - object relationship)
