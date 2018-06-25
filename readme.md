@@ -344,4 +344,82 @@ contract Inbox {
 
 ### Lecture 23 - More on Running Functions Than you want to Know
 
-* 
+* why we need a transaction to deploy a contract? if we want to change anything (data) on the blockchain we must submit a transaction
+* also we have to wait to be mined (proof of work algorithm) so that transaction gets approved
+* when this happens we can be sure that datastore on the blockchain is updated
+* so this transaction concept hold even for when we call public functions of a contract that update a value. as this is a piece of date stored on the blockchain (in the contract)
+* so message() does not change anything so must not involve a transaction, setMessage() changes the blockchain so it must involve a transaction
+* so we see that there are differenct ways in which we run functions on our contracts
+* there are 2 ways to invoke functions and they behave differently
+	* 'Calling a function' (call): cannot modify contracts data, can return data, runs instantly, free to do e.g message()
+	* sending a Transaction to a function (transact): can modify a contracts data, takes time to execute, returns the transaction hash, costs money! e,g setmessage()
+* Any time we submit a transaction to the network it takes time to be processed (15 to 30sec)
+* Any time we send a transaction to a function it returns the transaction hash WE DOT GET BACK A RETURNED VALUE even if we aks the function to return like below (valid code)
+```
+    function setMessage(string newMessage) public returns(string){
+        message = newMessage;
+        return message;
+    }
+```
+* Sending a transaction to a function does cost money. our acoount balance gets decreased anytime we send it. (a little bit)
+* When we send the transaction to a publick network (main ethereum) it takes time. when we send it in a test network in a VM (e.g borowser) the block time is tuned LOW VERY LOW so is almost instant. in public test networks the delay is realistic
+
+### Lecture 24 - Wei vs Ether
+
+* all transactions cost money. Ether money
+* in Remix the value property is in wei/gwei/finney/ether. these are units of measurement of the same thing in a euro vs cent analogy
+* 1 ether == 10^18 wei == 10^9 gwei(gigawai) == 10^3 finney
+* wei is the smallest fractional unit. there is no smaller one
+* there are nummerousconverters to calculate exchange rate between these units
+
+### Lecture 25 - Gas and Transactions
+
+* we will talk now about the gas system in etherium
+* the gas system is meant to measure how much work we are executing with our code
+* in real world if we write some code and deploy it to some remote server to run we must pay money
+* the same token is true in the world of ethereum
+* in order to get someone else to run our contracts we have to pay them money. this money is reflected in terms of gas
+* anytime we send a transaction to an ethereum network there is a gas price attached to it.
+* e.g the transaction of running the function setMessage() costed 10961 gas
+* to see the difference we write a resource intensive function in our contract
+```
+    function doMath(int a, int b) {
+        a+b;
+        a-b;
+        a*b;
+        a == 0;
+    }
+```
+* it is interesting to see what it would take to pay someone to run this code for us
+* there is a [online spreadsheet](https://docs.google.com/spreadsheets/d/1n6mRqkBz3iWcOlRem_mO09GtSKEKrAsfO7Frgx18pNU/edit#gid=0) with the gas prices
+* a *gasPrice* is the amount of wei the sender is willing to pay per unitgas to get this transaction processed
+* *startGas/gasLimit* units of gas that this transaction can consume
+* the above properties are specified in the transaction object.
+* gas can be calculated based on the prices, but not always. if we have a for loop we cannot calculate beforehand. therefore we set an upperlimit
+*eg our math fuction costs (3gas'add'+3gas'subtr'+5gas'multiply'+3gas'multiply') = 14gas
+* for our test doMath function if we set in transaction gasPrice=300 and gasLimit=10. we see that our limit is below the budget. wht happens then?
+* each step of operation is executed by somebody else. this one before starting know the remaining gas for the transaction (initial -steps so far) and knows how much his step costs if there is not enough for his step he stops execution and our function returs. in our case it would stop after substract
+* we only pay the amount of gas that was actually consumed not our budget. the cost of our trtansaction in wei would be 300 wei/gas * 14 gas = 4200 wei
+* current price in main ethereum is 1gwei/gas...
+* everyone that makes the transaction has to pay the price. so things get very expensive soon
+* if Facebook run on blockchain. each pst would cost money...
+
+### Lecture 26 - Mnemonic Phrases
+
+* currently we havce one account in metamask with an address,private/public key pair.
+* in a future world where ethereum has prevailed and has replaced actual money we might need to keep our money in different accounts. it is very hard to remember the credentials of all these accouts.
+* that why the 12 random word mnemonic phrase is used. from this phrase using the BIP39 mnemonic algoritm we can recreate all our accounts
+* in metamask i can create as many accounts as i want. all are linked to me and their common link is the mnemonic i entered in first account. these accounts are pregenerated
+* metamask has no mnemonic reset. we create it the first time and thats it (we need to reinstall metamask)
+* this mnemonic is used to generate a series of accounts
+* the tool to generate accounts with mnemonic is [link](https://iancoleman.io/bip39/) i enter the mnemonic and i see a series of derived addresses for ether. the first one matches our first account
+* mnemonic is very effectivew for password retrieval
+
+### Lecture 27 - Getting more Ether
+
+* with the the basic theory under our belt we are ready to move into building our apps. to test them we need ether, lots of it. so we need a way to load our account in rinkeby test network with ether for testing
+* we will use a faucet to get more ether [faucet](faucet.rinkeby.io)
+* this is a bit trickier to use. it requires posting our address to a social network and gives a lot of ether. this is to prevent spamming and loading the network
+
+## Section 2 - Smart Contracts with Solidity
+
