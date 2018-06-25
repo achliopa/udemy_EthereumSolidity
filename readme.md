@@ -211,3 +211,137 @@
 * in our dev machine we author some code that serve as a contracts source(dictates how it should behave and how to spend money)
 * we then take the contract code and deploy it to a network. an instance of the contract is created in the network (contract account)
 * a contract code can be deployed multiple times (multiple instances) to one network or multiple networks (class - object relationship)
+
+### Lecture 16 - The Solidity Programming Language
+
+* now we will look into the programming language used to write the code instered ina smart contract
+* the programming language is called *Solidity* authored specific for smart contracts
+	* is written in .sol files
+	* is stringly typed
+	* similar to javascript
+	* has several huge,gigantic 'gotchas' or potential bugs
+* the programs are always relatively small
+* the solidity is used as follows. a contract definition is written in solidity -> a solidity compiler is used -> a byte code ready for deployment in the ethereum network is produced and an application binary interface (ABI)
+* the ABI is used from our application code (eg Javascript) to interact with the bytecode that has been deployed in the ethereum blockchain
+
+### Lecture 17 - Our First Contract
+
+* to write our first smart contract in soilidity we will use an online editor called *Remix*
+* [Remix link](https://remix.ethereum.org)
+* we specify the version of solidity our contract will be based on
+```
+pragma solidity ^0.4.17;
+```
+* we define our fisrt contract and declare our first instance variable in it
+```
+contract Inbox {
+    string public message;
+}
+```
+* public means our variable will be accessible anywhere in the world (network)
+* we write a set of functions associated with the contract, a constructor ans a getter/setter
+```
+    constructor(string initialMessage) public {
+        message = initialMessage;
+    }
+    
+    function setMessage(string newMessage) public {
+        message = newMessage;
+    }
+    
+    function getMessage() public view returns (string) {
+        return message;
+    }
+```
+
+### Lecture 18 - Contract Structure
+
+* the complete contract solidity code
+```
+pragma solidity ^0.4.17;
+
+contract Inbox {
+    string public message;
+    
+    constructor(string initialMessage) public {
+        message = initialMessage;
+    }
+    
+    function setMessage(string newMessage) public {
+        message = newMessage;
+    }
+    
+    function getMessage() public view returns (string) {
+        return message;
+    }
+}
+```
+* `pragma solidity ^0.4.17;` specifies the version of Solidity our code is written with, it is used by the compiler. contract wont break when new solidity version arrives
+* `contract Inbox {` defines a new contract that will have some methods and variables
+* `string public message;` declares all of the instance variables and their types that exist in this contract. these are storage vars that exist in all lifetime of the contrsct
+* `constructor( .... ` defines different functions that will be members of this contract
+* the public variables are called STORAGE variables. they exist in eternity in the ethereum network. inside the block in the blockchain. Persistent
+* constructor functions are called one time when the contract instance is created
+
+### Lecture 19 - Function Declarations
+
+* the getMessage function signature `function getMessage() public view returns (string)` can be split as folows
+	* `getMessage()` is the function name + input arguments 
+	* `public view` is the function type declaration. 
+	* returns (string) is the return types
+* the most common function types used are 
+	* public: anyone with an account in the etherium network can call this function 
+	* private: only this contract can call this function
+	* view: this function returns data and NOT modify the contracts data
+	* constant: this function returns data and NOT modify the contracts data
+	* pure: function will not modify or even read the contract's data
+	* payable: when someone call this function they might send ether along. they are used when people pay us money to use our code in the contract
+* public and private are mutual exclusive (only one per function) and do not have to  do anything with security. just visibility
+* view and constant mean the same thing. view is newer
+* returns keyword specifies the type of data returned by the function (only for view or constant types)
+* syntacticaly is acceptable to return a val from a function that modifies our contracts data but is a NONO. we CANNOT do it
+
+### Lecture 20 - Testing with Remix
+
+* our workflow is 
+	* Use Remox Editor to write correct solidity code to define our contract
+	* Do compilation to bytecode
+	* Deploy into a fake sandbox ether network in the browser of a Contract Instance
+* all is done in Remix which is more than just an editor. it also provides a console for testing
+* we click compile and then run. we see a number of config settings
+* we use Javascript VM as environment (inbrowser virtual ethereum network)
+* i select one of the VM network test accounts. each one has 100 ether
+* we leave gas limit and value as default
+* we select our Inbox contract (the contract to deploy)
+* the tool sees the constrructor of our contract and presents is in the GUI
+* we enter and arbitrary text in initialMessage and click deploy
+* in therminal we see creation pending 
+* in the UI we see the id of the new contract instance(Inbox) and the contained functions and vars available to interact with the contract (function invocation)
+* when we invoke a view function or we try to see a var in the returned val we get an index as this is the val index in case there are multiple returned vals. also we get the type of data the val is
+* when we input strings in remix we must wrap them in double quotes
+* a GOTCHA is that a public var creates a getter with the var name that is publicly available as a function . same as getMessage in our case. this is a solidity quirk
+
+### Lecture 21 - Redeploying Contracts
+
+* as we have seen getMEssage() is actually not needed so we wnat to delete it and redeploy the contract
+* we delete it in the editor. it does not get automaticaly redeployed. we need to redeploy it
+* it is good to delete the previous instance prior to redeploying (x button in remix), first we need to compile
+
+### Lecture 22 - Behind the Scenes of Deployment
+
+* what actually happens in the ethereum network when we deploy a contract?
+* in previous lectures we talked about ethereum network accounts and ethereum network transactions. deployment or instantiation of a contract is very similar
+* when we deploy we use an external account (human account) to issue a transaction object that creates a contract account(s) in the ethereum network. the network itself creates the account based on what we inser in the transaction object
+* this object is visible in the remix console
+* The External Account to Create a Contract transaction object contains:
+	* nonce: how many times the sender has sent the transaction (external account trying to deploy the contract)
+	* to: - blank for new contracts (ethereum network assumes its a new contract, empty one if there is no data)
+	* data: compiled bytecode of the contract, our bytecode is available to anyone in the network to read. NEVER PUT a SECTRET IN THE CONTRACT CODE
+	* value: amount of *Wei* to send to the target address. initial BALANCE OF the contract account
+	* gasPrice: amount of wei the sender is willing to pay per unit gas to get this transaction processed
+	* startGas/gasLimit: units of gas that this transaction can consume
+	* v, r, s: crypto data
+
+### Lecture 23 - More on Running Functions Than you want to Know
+
+* 
