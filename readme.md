@@ -423,3 +423,31 @@ contract Inbox {
 
 ## Section 2 - Smart Contracts with Solidity
 
+### Lecture 29 - Contract Deployment
+
+* our challenge to figure out how to deploy our inbox contract to a public network like rinkeby outside of the remix Vm
+* the workflow is very similar to how we did it in remox: write contract source => use solidity compiler to compile => produce ABI & Contract Bytecode => deploy bytecode to network
+* the tool of choice for the job is [Truffle](https://truffleframework.com/) for all the above steps.
+* its a cli built in javascript (node) project
+* truffle is undergoing rapid developmentm some things are buggy, stuff breaks. everything around ethereum moves fast
+* to protect ourself from change we will write our own tool to perform the workflow of deploying in rinkeby the inbox contract
+
+### Lecture 30 - Boilerplate Requirements
+
+* we will write our own custom node boilerplate project in node that must do the following:
+	* need to be able to write solidity code in a js project => set up solidity compiler to build our contracts
+	* need some way to rapidly test contracts without doing the manual testing we were doing in remix => settup a custom mocha test runner that can somehow test solidity code
+	* need some way to deploy our contract to public networks => setup a deploy script to compile + deploy our contract
+* we create aproject folder *inbox* and npm init in it
+
+### Lecture 31 - Project File Walkthrough
+
+* in our project root folder we will create a folder named *contracts* to store our solididy contracts source files. in our case *Inbox.sol*
+* we will create a test folder our our mocha constracts test code *Inbox.test.js*
+* in root we have *package.json* with our scripts and 2 js files: compile.js and deploy.js which are self explanatory
+*  we make contracts folder, touch Inbox.sol and cp all our inbox contract source code from remix
+* for Sublime text we use [Ethereum plugin](https://packagecontrol.io/packages/Ethereum)
+
+### Lecture 33 - Compiling Solidity
+
+* 
