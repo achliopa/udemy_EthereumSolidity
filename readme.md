@@ -667,3 +667,15 @@ beforeEach(async () => {
 ### Lecure 47 -  Web3 vesion fix
 
 * to avoid code crashes due to the web3 version we use we update our test code as follows
+```
+const provider = ganache.provider();
+const web3 = new Web3(provider);
+...
+		.send({from: accounts[0], gas: '1000000'});
+
+	inbox.setProvider(provider);
+```
+
+### Lecture 48 - Verifying the Initial Message
+
+* 
