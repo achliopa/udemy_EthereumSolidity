@@ -29,3 +29,16 @@ const web3 = new Web3(ganache.provider());
 // 		assert.equal(car.drive(),'vroom');
 // 	});
 // });
+
+beforeEach(() => {
+	// get a list of all accounts
+	web3.eth.getAccounts()
+		.then((fetchedAccounts)=> {
+			console.log(fetchedAccounts);
+		});
+	//use one of those accounts to deploy a contract
+});
+
+describe('Inbox', () => {
+	it('deploys a contract', () => {});
+});

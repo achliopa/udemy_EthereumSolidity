@@ -566,4 +566,21 @@ describe('Car', ()=> {
 
 ### Lecture 42 - Fetching Accounts from Ganache
 
-* 
+* in the first actual test we will use web3 to retrieve a list of accounts that ganache automatically creates in the ethereum network
+* these are unlocked accounts thus easy to test (no keys or privacvy). we can freely send and receive ether from these accounts
+* confirming the existence of an account is crucial as we need an external account to deploy contracts
+* we retreive these accounts in a beforeEach() statement as we will need them in our actual mocha tests for transactions
+* to get a list of accounts we use the eth (ethereum module) of our web3 instance
+* every function we call in web3 is asynchronous returning a promise
+```
+	web3.eth.getAccounts()
+		.then((fetchedAccounts)=> {
+			console.log(fetchedAccounts);
+		});
+```
+* we write adummy it test to test wb3 fetchacounts
+* we run mocha `npm test` and SUCCESS we see the account addresses on terminal
+
+### Lecture 43 - Refactor with Async/Await
+
+* we refactor the code to use async/await
