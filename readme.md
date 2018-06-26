@@ -584,3 +584,86 @@ describe('Car', ()=> {
 ### Lecture 43 - Refactor with Async/Await
 
 * we refactor the code to use async/await
+```
+let accounts;
+
+beforeEach(async () => {
+	// get a list of all accounts
+	accounts = await web3.eth.getAccounts();
+	//use one of those accounts to deploy a contract
+});
+```
+
+### Lecture 44 - Deployment with Web3
+
+* to deploy a contract we need its bytecode from the compiled contract
+* we import it using object destructuring from the exported object `const { interface, bytecode } = require('../compile');`
+* we deploy the contract
+```
+	inbox = await new web3.eth.Contract(JSON.parse(interface))
+		.deploy({data: bytecode, arguments: ['Hi there!']})
+		.send({from: accounts[0], gas: '1000000'});
+```
+
+### Lecture 45 - Deployed Inbox Overview
+
+* we will break down the contract deploy code
+* `new web3.eth.Contract(JSON.parse(interface))` teaches web3 about what methods an Inbox contract has
+* `deploy({data: bytecode, arguments: ['Hi there!']})` tells web3 that we want to deploy a new copy of this contract (passing the specked arguments)
+* `send({from: accounts[0], gas: '1000000'})` instructs web3 to send out a transaction that creates this contract (paying the gasprice)
+* the Contract constructor allows us to interact with existing contracts or create new contracts. its uses as argument the ABI.
+* we use JSON parser as the compiled contract is JSON and we need to pass it as JS object
+* the deploy methods creates a transaction. it needs the bytecode and the contracts constructor arguments
+* the actual deploy is done by the send method (web3 - network comm)
+* web3 is used not only to deploy but to interact with existing contracts
+* to interact with a deployed contract from web3 we need: ABI, contract address
+* to  create a new contract" ABI, Bytecode
+* the returned value is the js representation of the deployed contract on blockchain
+* we look into the console log to see its properties
+* there is a lot  of info onthe Providers
+```
+ providers: 
+      { WebsocketProvider: [Function: WebsocketProvider],
+        HttpProvider: [Function: HttpProvider],
+        IpcProvider: [Function: IpcProvider] },
+
+```
+* IPC is used when the network is on smae machine
+* methods property lists all available methods we can interact with
+```
+  methods: 
+   { setMessage: [Function: bound _createTxObject],
+     '0x368b8772': [Function: bound _createTxObject],
+     'setMessage(string)': [Function: bound _createTxObject],
+     message: [Function: bound _createTxObject],
+     '0xe21f37ce': [Function: bound _createTxObject],
+     'message()': [Function: bound _createTxObject] },
+```
+* options gives additional info on the deployed contract such as its address
+```
+ options: 
+   { address: [Getter/Setter],
+     jsonInterface: [Getter/Setter],
+     data: undefined,
+     from: undefined,
+     gasPrice: undefined,
+     gas: undefined },
+
+```
+* we need the address to interact later on
+
+### Lecure 46 - Asserting Deployment
+
+* we see what fuunctionality we want to test.
+* we want to test that inbox message gets a default message and that we can change it, also we need a test to check if we can deploy at all
+* to check the deployment we need to check that the returned deployed object has an address attached to it
+```
+	it('deploys a contract', () => {
+		assert.ok(inbox.options.address);
+	});
+```
+* we use assert.ok that checks for existence of a value (not  null or undefined)
+
+### Lecure 47 -  Web3 vesion fix
+
+* to avoid code crashes due to the web3 version we use we update our test code as follows
