@@ -450,4 +450,120 @@ contract Inbox {
 
 ### Lecture 33 - Compiling Solidity
 
+* the deployment process and testing process assumes we have a compiled solidity contract
+* we will use the solidity compiler to do so. the output ABI is used by JS and bytewcode gets deployed
+* we install solidity compiler as a npm module *npm install --save solc*
+* we create the compile.js file in project root 
+* we DO NOT import the solidity source file using node ES5 import `require('./constracs/Inbox.sol');` it will throw an error. we must read the file contect and parse it in the compiler. we use built in modules path and fs. path to reach the file and fs to read it
+```
+const inboxPath = path.resolve(__dirname, 'contracts','Inbox.sol');
+const source = fs.readFileSync(inboxPath,'utf8');
+```
+* we import the solidity compiler `const solc = require('solc');`
+* we specify the amount of source files we want to compile `solc.compile(source,1);`
+* we console log it to see the output
+
+### Lecture 34 - The compile Script
+
+* we test compile from terminal with *node compile.js*
+* the output is a js object. in that object there is a *contracts* property that contains an object. this contains our contracts (Inbox) as JS objects with several properties
+* the properies we are interested in are a) the *bytecode* for deployment b) *interface* the constract ABI
+* the ABI lists all the available functions to be called and their arguments (in and out)
+* we export the part of compile output that interest us (Inbox) with `module.exports = solc.compile(source,1).contracts[':Inbox'];`
+
+### Lecture 35 - Testing Architecture
+
+* now with our source compiled we can think of how to test it
+* we will do functional testing locally. we will test any exposed function.
+* to do so we will use a Local Ethereum Test Network. the network is going to be created by a npm library called Ganache (previously known as TestRPC)
+* we will take the bytecode from our compiled object and feed it to Ganache for deployment on the test network
+* we will also use the ABI the JS interface and feed it it to Web3 which gives us access to the deployed contract in the test network
+
+### Lecture 37 - Installing Modules
+
+* we install a couple of npm modules `npm install --save mocha ganache-cli web3@1.0.0-beta.26`
+* web3 is undergoing rapid development
+* we create anew folder in project root called test and in there we make a file Inbox.test.js
+* in this file we will write our mocha tests (assertons)
+* in test file we import libraries
+```
+const assert = require('assert');
+const ganache = require('ganache-cli');
+const Web3 = require('web3');
+```
+* Web3 is imported as uppercase because what we import is a constructor function
+
+### Lecture 38 - Web3 Versioning
+
+* currently web3 is the must-go solutiopn to communicate between a JS webapp and the ethereum world. it is our portal to the ethereum world
+* web3 versions are split into 2 large groups:
+	* v0.x.x aka Primitive interface supports only callbacks for async code
+	* v1.x.x and up supports promises and async/await
+* most currently available documentation is for older version
+
+### Lecture 39 - Web3 Providers
+
+* each web3 instance connects to an ethereum network
+* we can use the Web3 constructor function to make multiple instances in a project to connect to multiple ethereum networks
+* we use the Web3 constructor to make an instance of web3. 
+* upon instantiation we need to immediately do some configuration
+* the configuration includes setting a Provider, a communication layer between a web3 libvrary and an ethereum network. like a middleware to send and receive messages
+* because web3 is built to talk to an ethereum network it will complain if we dont set a provider
+* we use the ganache provider to connect to the local network `const web3 = new Web3(ganache.provider());`
+
+### Lecture 40 - Testing with Mocha
+
+* mocha is a general purpose JS test framework. we can use it to test a frontend app or a backend app.
+* the three basic functions it provides are:
+	* it: run a test and make an assertion
+	* describe: groups together *it* functions
+	* beforeEach: execute some general setup code
+* a sample test file in mocha is the following:
+```
+const assert = require('assert');
+
+class Car {
+	park() {
+		return 'stopped';
+	}
+
+	drive() {
+		return 'vroom';
+	}
+}
+
+describe('Car', ()=> {
+
+	let car;
+
+	beforeEach(() => {
+		car = new Car();
+	});
+
+	it('can park', ()=>{
+		assert.equal(car.park(),'stopped');
+	});
+
+	it('can park', ()=>{
+		assert.equal(car.drive(),'vroom');
+	});
+});
+```
+* usually we run mocha as a npm script by adding it to the package.json `"test": "mocha"`
+* we run it with `npm run test` or `npm test`
+* in a TDD approach we first break the test and then fix it
+* beforeEach help our test code be DRY
+
+### Lecture 41 - Mocha Structure
+
+* the flow of testing an ethereum contract with mocha is the following:
+	* 1. mocha starts and loads our test file
+	* 2. deploy a new contract to test network (ganache) using beforeEach
+	* 3. manipulate the contract (call a function) using it
+	* 4. make an assertion about the contract (check persistence) using it
+	* repeat from step 2
+* a contract is deployed with a transaction . it needs an account . the ganache network takes care of it (unlocked accounts no keys needed)
+
+### Lecture 42 - Fetching Accounts from Ganache
+
 * 
