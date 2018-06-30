@@ -913,4 +913,161 @@ const myArray = [
 	[7,8,9]
 ];
 ```
-* this array has nested arrays
+* this array has nested arrays. in Solidity language there is no problem with such a structure (Nested dynamic arrays)
+* In ABI/JS/Web3 World we cannot pull or get a nested dynamic array from solidity
+* this is not a limitation of JS. its a limitation of the bridge between two langs
+* Strings inside solidity are represented as dynamic arrays. so WE CANNOT transfer ARRAYS OF STRINGS between solidity and JS
+
+### Lecture 65 - Entering the Lottery
+
+* we declare it as dynaic array ` address[] public players;`
+* we implement the enter function to allo users to enter.  people to enter need to send ether so our function must be payable. the signature is `function enter() public payable`
+* the function is
+```
+    function enter() public payable {
+        players.push(msg.semder);
+    }
+```
+
+### Lecture 66 - Validation with Require Statements
+
+* we test the enter func in the remix virtual network. we deploy and use an account to enter. we call players with 0 and we see the id
+* we call enter without ether..
+* we use require() solidity function to enforce rules `require(msg.value > .01 ether);`
+* we use msg.value to see the sent ether. the value is in wei but as we require minimum  0.01 ether to participate the value is really large so we use the special expression `.01 ether` which is converted to wei 
+* we see that transaction is rejected if we dont send enough ether
+* if we send enough it is successful and the address added to the players list
+* require sends not clear transaction  rejection messages
+
+### Lecture 67 - The Remix Debugger
+
+* the require error messages in console are obscure
+* Remix offers details and debug options in the transaction terminal
+* hitting debug we can go through the execution of contract on transaction. we can step in
+* using console.log does not work with contracts
+
+### Lecture 68 - Pseudo Random Numbers Generation
+
+* after we have enough players the manager should trigger the contract pick a winner.
+* we need an RNG to do that. in solidity we dont get access to an RNG.we need to  fake it. we will use Pseudo Random Number Generator. it can be cheates though
+* we will pick a) current block difficulty, b) current time, c) addresses of entrants
+* we will pass them all to a SHA3 algorithm and get a really big number hash that is pseudorandom
+* we will use a helper function in contract (private) to calculate the number
+```
+function random() private view returns(uint) {
+        return uint(keccak256(block.difficulty, now, players));
+    }
+```
+* keccak256 is another name for sha3 and is inbuilt. it returns a hash so we need parsing to uint
+* we temporary set this func to public to test it in remix. we revert it back to private
+
+### Lecture 69 - Selecting a Winner
+
+* the pseudorandom number will be moduled on the players.length (random()%players.length) => random number between 0 and players.length
+```
+    function pickWinner() public {
+        uint index = random()%players.length;
+    }
+```
+
+### Lecture 70 - Sending Ether from Contracts
+
+* we get the address of the player that won with `players[index];`
+* addresses in solidity are objects packed with methods and props
+* a method we can call is .transfer() to transfer money passing the amount of wei to transfer to this address. 
+* to send all ether in the contract we use `this.balance;`
+* the complete command is `players[index].transfer(this.balance);`
+* we redeploy in remix and test. it works
+* we need to reset after the pickWinner
+
+### Lecture 71 - Resetting COntract State
+
+* after setting money we need to reset the players array without needing to redeploy the contract 
+* we use `players = new address[](0);` to create a new empty dynamic array of addresses named players. (0) sets an initial size of 0 (empty)
+* if we set a larger number it will be filled with empty hashes
+
+### Lecture 72 - Requiring Managers
+
+* now anyone can trigger pickWinner. we want only the manager to be able to do it.
+* also time is a source of randomness so we need to keep it random
+* in pickWinner we need to add a require to let only manager account execute it
+* `require(msg.sender == manager);`
+* we test it and it works. other users when calling the method it throws error
+
+### Lecture 73 - Function Modifiers
+
+* image we implement a  returnEntries() function to return the money to all participants in the case we want to cancel the lottery
+* this is an admin level function reserved for the manager. it seems we can use require to enforce that
+* in this case we have duplicate code in our contract it breaks DRY principle
+* solidity helps keeping the code DRY with function modifiers
+```
+    modifier restricted() {
+        require(msg.sender == manager);
+        _;
+    }
+```
+* we put there our code and add `_;`
+* then in the functions we want to apply this modifications we add the name of the  modifier in the signature
+```
+    function pickWinner() public restricted {
+        uint index = random()%players.length;
+        players[index].transfer(this.balance);
+        players = new address[](0);
+    }
+```
+* _ is a placeholder indicating tehr est of the function code where modifier gets applied
+
+### Lecture 74 - Returning Players Array
+
+* we want to be able to get all players
+* we add anew function
+```
+    function getPlayers() public view returns(address[]) {
+        return players;
+    }
+```
+
+### Lecture 75 - Contract Review
+
+*  we quickly check our contract in remix to verify correctness
+* our contract complete
+```
+pragma solidity ^0.4.17;
+
+contract Lottery {
+    address public manager;
+    address[] public players;
+    
+    constructor() public {
+        manager = msg.sender;
+    }
+    
+    function enter() public payable {
+        require(msg.value > .01 ether);
+        players.push(msg.sender);
+    }
+    
+    function random() private view returns(uint) {
+        return uint(keccak256(block.difficulty, now, players));
+    }
+    
+    function pickWinner() public restricted {
+        uint index = random()%players.length;
+        players[index].transfer(this.balance);
+        players = new address[](0);
+    }
+    
+    modifier restricted() {
+        require(msg.sender == manager);
+        _;
+    }
+    
+    function getPlayers() public view returns(address[]) {
+        return players;
+    }
+}
+```
+
+### Lecture 76 - New Test Setup
+
+* 
