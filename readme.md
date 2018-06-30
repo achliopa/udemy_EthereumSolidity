@@ -678,4 +678,90 @@ const web3 = new Web3(provider);
 
 ### Lecture 48 - Verifying the Initial Message
 
-* 
+* in the next test we test that when we create anew contrsct we get a default message
+* to test it we look into the deployed inbox and look for the message property
+* in remix to get the deployed contract instance (public) variables we used a method with the variable's name (message()) on the deployed contract
+* this is 'calling' function as we dont modify anything on contract and blockchain. no cost, no transaction, no big wait time.
+* still an async method, the actual call is `const message = await inbox.methods.message().call();`
+* first we reference the contract (contract instance as JS object). contract was a property called methods. it is an object (for inbox it has 2 methods message() and setMessage()). we call the first one
+* to do the call we chain call(). this is because in the method 'mesage()' we pass the input arguments of the function. the call() accepts as arguments params that customize the transaction, e.g gas
+* the actual assertion is `assert.equal(message, INITIAL_STRING);`
+* we run the test and both pass
+
+### Lecture 49 - Testing Message Updates
+
+* we will no test the setMessage() method. first we will change the message(non free transaction) and then retrieve it (free call). the second part we already have
+```
+		await inbox.methods.setMessage('Goodbye').send({from: accounts[0]});
+		const message = await inbox.methods.message().call();
+		assert.equal(message, 'Goodbye');
+```
+* like deploy this is a transaction so we use send() passing transaction arguments. passing the from is mandatory.. cost??
+* what this transaction returns is a hash. we dont use it here
+
+### Lecture 50 - Deployment with Infura
+
+* with the testing done, we need to write a string that will take our contract copileit and deploy it in a real test network(rinkeby). the process is the same as deploying in the actual main ethereum
+* as we saind we use a provider to a web3 instance to connect to a network. 
+* unlike ganache connecting to a real test network is more compicated.
+* An Infura Node in the actual Ethereum Network exposes an Infura API which tals to the Web3 Provider to connect to our web3 instance in our app. the provider uses the account mnemonic as the account is protected
+* the infura node talks to all the nodes in the Ethereum Network
+* we need an account with ether to do it a locked account.
+* the provider uses the account menmonic to get access to our accounts (publ, priv keys). ganache provided inbuild accounts. now we need to provide them
+* to connect to the network we need to connect to a node. this node can be a local node on our machine (we need to set it up, non-trivial task) or a node provided by a service (Infura)
+* Infura is a public API, which give us the ability to connect to an Infura hosted ethereum node on the Rinkeby
+
+### Lecure 51 - Infura Signup
+
+* we go to [Infura](https://infura.io) -> Get started -> SignUP -> Get API key
+* the api key is not attached to an account or network. is Infura related
+* Infura sends an email will a list of links per network (with our API key prepopulated)
+
+### Lecture 52 - Waller Provider Setup
+
+* we install a module to help us with connection *truffle-hdwallet-provider' and install it in our project `npm install --save truffle-hdwallet-provider`
+* this module is actually a special provider that allows connecting to a network and unlocking an account (with mnemonic)
+* we create a new source file *deploy.js* in root folder to host our code to deploy on rinkeby
+```
+const HDWalletProvider = require('truffle-hdwallet-provider');
+const Web3 = require('web3');
+const { interface, bytecode } = require('./compile');
+
+const provider = new HDWalletProvider(
+	'YOUR ACCOUNT MNEMONIC',
+	'YOUR INFURA LINK + APIKEY'
+);
+const web3 = new Web3(provider);
+```
+* we code above imports the depndencies and creates a truffle profuder with the credentials then passes it to the web3 instance
+* the instance is completely enabled to perform transactions (we have ether)
+
+### Lecture 53 - Deployment to Rinkeby
+
+* our code above was prep code. now we will do the actual deployment
+* the code will be like the test file deploy
+* we have 2 pieces of async code. 1) get the accounts 2) do the deploy. we want to use async/await
+* async await works in a function setting so we write a function and call it immediately
+* we get our accounts (linked to the mnemonic). go to first one (with ether) and log it
+* our deploy code is 
+```
+const deploy = async () => {
+	const accounts = await web3.eth.getAccounts();
+	console.log('Attempting to deploy from account: ', accounts[0]);
+	const result = await new web3.eth.Contract(JSON.parse(interface))
+		.deploy({data: '0x' + bytecode, arguments: ['Hi there!']})
+		.send({gas: '1000000', from: accounts[0]});
+	console.log('Contract deployed to: ', result.options.address);
+};
+deploy();
+```
+* we make sure to log the contract instance address for reference later on
+* we run with `node deploy.js` and wait, we get reply
+```
+Attempting to deploy from account:  0xd010bB5A2A78cC3890DaBDaC738bc3419bF0BF82
+Contract deployed to:  0x28D6b47553dA4461fBEf2dce7E18Af742B340A04
+```
+
+### Lecture 54 - Observing deployment on Etherscan
+
+*
