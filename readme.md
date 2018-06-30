@@ -1070,4 +1070,82 @@ contract Lottery {
 
 ### Lecture 76 - New Test Setup
 
-* 
+* we will start building our mocha tests to test our web3 interface
+* we duplicate our inbox project (use it as boilerplate) as lottery
+* rename the project name in package.json
+* in contracts folder we rename the Inbox.sol as Lottery.sol and replace teh solidity code witht he newly developed one in remix
+* we delete the test file from test folder and create anew one *Lottery.test.js*
+
+### Lecture 77 - Test Project Updates
+
+* our compile and deploy files look into the Inbox file from prev project. we fix that just renaming .
+* in deploy.js we remove the deploy configuration object arguments. as our lottery constructor takes no arguments so we delete it
+
+### Lecture 78 - Test Helper Review
+
+* we start by fleshing out our mocha test file
+* nothing new. exactly like in inbox. we import the modules and prep our test by deploying the contract using web3 in ganache
+```
+const { interface, bytecode } = require('../compile');
+
+let lottery;
+let accounts;
+
+beforeEach(async () => {
+	accounts = await web3.eth.getAccounts();
+
+	lottery = await new web3.eth.Contract(JSON.parse(interface))
+		.deploy({data: bytecode})
+		.send({from: accounts[0], gas: '1000000'});
+});
+```
+
+### Lecture 79 - Asserting Deployment
+
+* like in Inbox project our first test asserts that the contract is deployed `assert.ok(lottery.options.address);`
+
+### Lecture 80 - Entering the Lottery
+
+* our test are behaviour driven. what behaviour we are interested in? we test it
+* we want to make sure that when someone enters his addres is added to the list
+```
+	it('allows one account to enter', async () => {
+		await lottery.methods.enter().send({
+			from: accounts[0],
+			value: web3.utils.toWei('0.02', 'ether')
+		});
+	});
+```
+* as value is passed in wei and a lot of 0 are required we use ewb3.utils. function to convert ether to wei. actually we can convert any denomination to wei by specifying it `toWei('0.02', 'ether')`
+* we retrive the list of players from contract with
+```
+		const players = await lottery.methods.getPlayers().call({
+			from: accounts[0]
+		});
+```
+* we assert equality 
+```
+		assert.equal(accounts[0], players[0]);
+		assert.equal(1,players.length);
+```
+
+### Lecture 80 - Asserting Multiple Players
+
+* we cp the previous test and just add more enter calls (and more assertions)
+
+### Lecture 81 - Try Catch Assertions
+
+* we want to test that someone has to send the appropriate amount of ether to enter the lottery
+* in this test we check for error using the try , catch syntax
+```
+		try {
+			await lottery.methods.enter().send({
+				from: acounts[0],
+				value: 0
+			});
+			assert(false);
+		} catch (err) {
+			assert.ok(err);
+		}
+```
+* we expect that enter transaction call with insufficient wei will  throw an error. so we put assert(false) after the call as we should not get there and in the catch we verify the error
