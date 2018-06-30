@@ -764,4 +764,43 @@ Contract deployed to:  0x28D6b47553dA4461fBEf2dce7E18Af742B340A04
 
 ### Lecture 54 - Observing deployment on Etherscan
 
-*
+* the address we got bakc is the address of our contract in the rinkeby network
+* if we know how to interact with the contract we can builld a web app on top of it
+* to see our contract in network we use [etherscan](https://rinkeby.etherscan.io) passing its address
+* we see the tx id, the block it was included into, the actual cost, the bytecode
+* we can see the bytecode as optcode (assbmly like ether commands)
+
+### Lecture 55 - Deployed contracts in remix
+
+* an easy to use to interact with deployed contract without code is using Remix
+* we cp our solidity code from inbox.sol into remix editor compile it and hit run
+* we select injected web3 (rinkeby) environment
+* we insert our account on rinkeby (autocomplete from metamask)
+* we dont want to deploy new contract but interact with existing contract.
+* we insert the address (from ehterscan or console) and hit at address
+* we get the exposed methods... hit message( ) and see our initial message on console.
+* now we work on a real network so our transactions have delay
+* we set a new message and hit setmessage. we get a metamask popup (REMIX needs metamask) asking us to confirm the transaction to the contract (and the cost involved)
+* we submit and our trnasction gets processes. we confirm in etherscan and by invoiking getter
+* invoking the setter was cheaper than deployment
+
+### Lecture 56 - Project Review
+
+* Write the contract
+	* why we prefer web3 and JS over remix to test contracts? writing the contract is nothing compared to the app that runs on top of it. we use remox to quickly test our contract and  then move to JS
+	* remix does not support git or versioning
+* Compile the contract
+	* we use solidity compiler (solc). we can compile multiple files with multiple contracts. `.contracts['filename:Contractname']`
+	* instead of source(file) in compile() method we can pass a path
+* Test the contract (locally)
+	* we used ganache and local network and web3
+	* we used ABI and bytecode from copliled file
+	* mocha to test
+* Deploy contract on real network
+	* used truffle-hdwallet-provider as provider and Infura as network node provider
+
+## Section 3 - Advanced Smart Contracts
+
+### Lecture 57 - The Lottery Contract
+
+* 
