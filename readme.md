@@ -1149,3 +1149,7 @@ beforeEach(async () => {
 		}
 ```
 * we expect that enter transaction call with insufficient wei will  throw an error. so we put assert(false) after the call as we should not get there and in the catch we verify the error
+
+### Lectture 83 - Testing Function Modifiers
+
+* 
