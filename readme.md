@@ -803,4 +803,114 @@ Contract deployed to:  0x28D6b47553dA4461fBEf2dce7E18Af742B340A04
 
 ### Lecture 57 - The Lottery Contract
 
-* 
+* we will write a more complex contract. its going to be a lottery, a raffle
+* our contract will be a lottery contract with a prize pool (in ether) and a list of participating players
+* when someone sends ether to the contract, he is registered in the players list and his ether is added to the prize pool
+* after some people enter the contest the manager tells contract to pick a winner
+* the contracts picks a winner and sends all the prize pool to the winner
+* the contract then resets and is open to new participants
+* this contract will need security
+
+### Lecture 58 - Lottery Design
+
+* variables: 
+	* manager: address of person who created the contract (he can tell lottery to pick a winner)
+	* players: array of addresses of people who have entered
+* methods: 
+	enter: enters a player into the lottery (he must send ether)
+	pickWinner: randomly picks a winner and sends them the prize pool
+
+### Lecure 59 - Basic Solidity Types
+	
+* we use remix to flesh out the contract
+* we need to set as va account addresses. we can set them as strings
+* solidity offers an address type for store such variables
+* Basic Solidity Types:
+	* string: sequence of characters e.g "Hi there!"
+	* bool: boolean value e.g true, false
+	* int: integer,signed. no decimals e.g 0, -3000, 54434
+	* uint: unsigned int, positive e.g 0, 4599, 5435
+	* fixed/ufixed: *fixed* point number,  Number with decimals e.g 20.0001 -43.45
+	* address: has methods tied to it for  sending money e.g 0x5487fgshjkgf5178hsk
+* in contracts we avoid doing math. we use contracts to store critical and secure data
+* we dont want to pay money for doing calculations. only simple math
+
+### Lecture 60 - Starting the Lottery Contract
+
+* we declare the manager var with `address public manager;`
+* public or private declaration offers no security only visibility
+* we want to set the manager address upon creation so we set it at constructor
+* we dont want to pass the address as an input argument to constructor but find it automatically from the deployment transaction
+
+### Lecture 61 - The Message Global Variable
+
+* to get the address we will use a global variable icluded anytime we invoke a function in a solidity contract
+* the flow of info is Account => Transaction => Contract Instance. `msg` object decribes the 2 first steps
+* `msg` global object gives info about who created the transaction and the transaction itself
+* this object is avaliable not only on deployment but at any function invocation
+* The msg Global variable proiperties are:
+	* msg.data: 'Data' field from the call or transaction that invoked the current function
+	* msg.gas: Amount of gas the current function invocation has available
+	* msg.sender: Address of the account that started the current function invocation
+	* msg.value: Amount of ether (in wei) that was sent along with the function invocation
+* the msg.sender contains the address we want
+* our contract so far is:
+```
+pragma solidity ^0.4.17;
+
+contract Lottery {
+    address public manager;
+    
+    constructor() public {
+        manager = msg.sender;
+    }
+}
+```
+* we run it in remix (local VM) and confirm it works ok
+
+### Lecture 62 - Overview of Arrays
+
+* apart from Solidity Basic Types we have Reference Types as well (e.g array)
+* Solidity Reference Types:
+	* fixed array: Array that contains a single type of element. has an unchanging length. e.g int[3] --> [1,2,3] , bool[2] --> [true,false]
+	* dynamic array: Array that contains a single type of element. Can change is size over time. int[] --> [1,2,3]
+	* mapping: Collection of key value pairs. Think of Javascript objects, Ruby hasses, Python Dictionary. All keys myst be of the same type, and all values must be of the same type. e.g mapping(string=> string)
+	* struct: Collection of key value pairs that can have different types. e.g
+	```
+	struct Car {
+		string make;
+		string model;
+		uint value;
+	}
+	```
+* the number in brackets distinguished a fixed froma dynamic array
+* for our lottery players var we will use dynamic array
+* arrays support the .push(element) method, .length property, array[index]
+* they are 0 based
+* like a normal var we can access an array e.g. myArray witha method call myArray()
+* but this method will need an input argument (index) to return the element in that position. so it returns only INDIVIDUAL ELEMENTS
+* to return an entire array we need to write a function
+```
+function getMyArray() public view returns (uint[]) {
+	return myArray;
+}
+```
+* this technique works ok for simple arrays
+
+### Lecture 63 - Overview of Mappings and Structs
+
+* mappings are used for storing collections of things
+* structs are used for complex data, a singular thing with its properties
+
+### Lecture 64 - Big Solidity Gotcha
+
+* we will see a big gotcha of fixed and dynamic arrays
+* a JS 2D 3by3 array is like:
+```
+const myArray = [
+	[1,2,3],
+	[4,5,6],
+	[7,8,9]
+];
+```
+* this array has nested arrays
