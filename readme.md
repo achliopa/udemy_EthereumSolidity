@@ -1327,7 +1327,41 @@ const abi = [...
 
 ### Lecture 95 -The 'Enter' Form
 
-*  
+*  we implement a html form to capture the ether value as a string from an input field. the string gets stored at component state
+* at the input elemetn we add an inline event listener to capture input
+```
+<form action="">
+          <h4>Want to try your luck?</h4>
+          <div>
+            <label>Amount of ether to enter: </label>
+            <input
+              value = {this.state.value}
+              onChange={event => this.setState({value: event.target.value})}
+            />
+          </div>
+          <button>Enter</button>
+        </form>
+```
 
+### Lecture 96 - Form Setup
 
+* we add an event handler to handle submit of the form (buttone click)
+* to avoid binding the this object to the lhandler we implement it as an arrow function
+* despite web3 call methods with transaction methods we HAVE to set the from property passing the account address. as metamask provider requires it we get the accounts (from metamask provider) with `web3.eth.getAccounts();`
+* we invoke transaction method passing a value in wei (we convert ether to wei with web3 inbuild method)
+```
+  onSubmit = async (event) =>  {
+    event.preventDefault();
 
+    const accounts = await web3.eth.getAccounts();
+
+    await lottery.methods.enter().send({
+      from: accounts[0],
+      value: web3.utils.toWei(this.state.value, 'ether')
+    });
+  };
+```
+
+### Lecture 97 - Entering the Lottery
+
+*
