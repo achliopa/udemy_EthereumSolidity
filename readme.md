@@ -1150,6 +1150,46 @@ beforeEach(async () => {
 ```
 * we expect that enter transaction call with insufficient wei will  throw an error. so we put assert(false) after the call as we should not get there and in the catch we verify the error
 
-### Lectture 83 - Testing Function Modifiers
+### Lecture 83 - Testing Function Modifiers
 
-* 
+* we want to test that if someone who is not the manager picks the winner an error is thrown
+* the way to test is like the previous one with try and catch
+* we dont have to populate the layers array first. we are testing the require statement in the function modifier that comes first. this one should throw the error
+```
+try {
+			await lottery.methods.pickWinner().send({
+				from: accounts[1]
+			});
+			assert(false);
+		} catch(err) {
+			assert(err);
+		}
+```
+* we dont use the assert function of mocha, but the JS one. the mocha assert dowes not work nicely with async code
+
+### Lecture 84 - End to End Test
+
+* we test that the contract sends money to the winner and resets the array
+* pickwinner is random . we cannot test it as we dont know who will get the funds. 
+* we will have one entrant so we can be sure he gets the money
+* we enter one player in the contract
+```
+		await lottery.methods.enter().send({
+			from: accounts[0],
+			value: web3.utils.toWei('0.02', 'ether')
+		});
+```
+* to assert money transfer we store the initial balance `const initialBalance = await web3.eth.getBalance(accounts[0]);`
+* the web3.eth.getBalance() methods is used to get the balance from extrenal accounts or contracts, passing the address.
+* we pick a winner
+```
+		await lottery.methods.pickWinner().send({
+			from: accounts[0]
+		});
+```
+* we store the final balance after winning the lottery `const finalBalance = await web3.eth.getBalance(accounts[0]);`
+* the difference is not exacctly 0.02 as we have the transaction fees
+```
+		const difference = finalBalance - initialBalance;
+		assert(difference > web3.utils.toWei('0.019'), 'ether');
+```
