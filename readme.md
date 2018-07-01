@@ -1193,3 +1193,141 @@ try {
 		const difference = finalBalance - initialBalance;
 		assert(difference > web3.utils.toWei('0.019'), 'ether');
 ```
+
+## Section 4 - Building Interactive Front-Ends
+
+### Lecture 85 - Ethereum App Architecture
+
+* we will now build the WebFrontend of the App using React (YESS!!)
+* Traditional Webapp vs React SinglePage Webapp: Move things to Browser, Limit Traffic, Enhance Performance
+* An Ethereum app uses web3 + Metamask(Infura) for pub/pricv keys to write to the ethereum network. Metamask is a browser plugin so it MUST be done by the Client (Browser)
+* The users Private Keys are on his machine. WILL NEVER go to Our Server
+* Reading from the blockchain can be done by the server using OUR keys, not the users
+* Intelligence moves to Browser AKA React!!
+* Not worth to try to Build it in Plain JS
+
+### Lecture 86 - Application Overview
+
+* we install create-react-app genetator (we have it) with `sudo npm install -g create-react-app`
+* in our app we will inform people on the status of our contract (participants and prize pool) and who manages the contract
+* it will give the ability to send ether
+* it will have a pickwinner section open to all (ehter will block requests)
+* we use the Rinkeby network
+* we generate a new react app with create-react-app tool
+* we go to out of the lottery project folder to our workspace
+* we run `create-react-app lottery-react`
+* we have a separate project folder for our frontend as create-react-app do not integrate well other codebases
+
+### Lecture 87 - Getting Started with Create-React-App
+
+* we go in lottery-react generated project folder
+* we have two pain folders *public* and *src*
+* public folder hosts our index.html 
+* src folder hosts react components and css styling
+* we launch the boilerplate app with `npm start` in root folder
+
+### Lecture 88 - Multiple Web3 Instances
+
+* we install web3 module in frontent project (lottery-react) ` npm install --save web3@1.0.0-beta.26` but we prefer to use yarn `yard add web3@1.0.0-beta.26` as if we have yarn react-create-app uses it
+* we use yarn in the project. we install it globally as system dependency outside node as web3 needs latest yarn version
+* how to set up web3 in a new project:
+	* we assume user has metamask installed
+	* when metamask run in our browser it injects web3 v0.20 to connect to public ethereum netwroks.
+	* it injects it into every active page in the browser. we can check it by writing web3 in the console
+	* this old version has a provider set up inside to connect to public networks (e.g rinkeby)
+	* in our project we want to use a new version, but we want to use the public/private keys stored in metamask web3 v0.2 provider. so we want to link to the metamask provider
+
+### Lecture 89 - Web3 Setup
+
+* we create a new file in src folder *web3.js*
+* the setup code is like lottery test file but in ES6
+* we pass the metamask web3 versions provider in the web3 instance as `window.web3.currentProvider`
+```
+import Web3 from 'web3';
+const web3 = new Web3(window.web3.currentProvider);
+export default web3;
+```
+* the above code exports web3 instance v1.0.0 with provider and keys, accounts to our frontend code
+* we import the instance to App.js `import web3 from './web3';` and console log the version to confirm `web3.version` and open the browser terminal
+* we console log the account and verify its the same as the selected in metamask
+```
+    web3.eth.getAccounts()
+      .then(console.log);
+```
+
+### Lecture 90 - Deploying the Lottery COntract
+
+* in our *lottery* project we had tworeusable scripts apart from tests. *compile.js* and *deploy.js*
+* coplile.js produced the ABI and bytecode of the contract using solc.
+* we will use the contract ABI from web3 in our app to find the deployed contract instance using its address (and the deploy.js script to deploy the contract to rinkeby)
+* we go back to lottery project and make sure that in deploy.js we console log the address after deployment.
+* we `console.log(interface);` as well in deploy.js to get the ABI on terminal
+* we run `node deploy.js` in lottery project
+```
+Attempting to deploy from account:  0xd010bB5A2A78cC3890DaBDaC738bc3419bF0BF82
+[{"constant":true,"inputs":[],"name":"manager","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"pickWinner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getPlayers","outputs":[{"name":"","type":"address[]"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"enter","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"players","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
+Contract deployed to:  0x842e800F211d0DBC9f0dcF3A5B8bF1A3420e5AF6
+```
+
+### Lecture 91 - Local Contract Instances
+
+* we will use the address of deployed conteact in our app
+* we create a new file in src *lottery.js* to make a local copy of the contract
+* in lottery.js we import local instance of web3, we set as variables address and abi
+```
+const address = '0x842e800F211d0DBC9f0dcF3A5B8bF1A3420e5AF6';
+const abi = [...
+``` 
+* we use them to  create a local copy of the deployed contract in rinkeby as a JS object to use it as an abstraction of the deployed contract so that we can interact with it in our react code `export default new web3.eth.Contract(abi,address);`
+* all the methods we used to iunteract with the contract in mocha tests apply to this local copy (but take effect in rinkeby)
+
+### Lecture 92 - Rendering Contract Data
+
+* we import lottery.js in App.js `import lottery from './lottery';`
+* from now on is clear implementation as all our web3 setup is done
+* we want to render the address of the manager on teh page, we use React *componentDidMount* lifecycle method to place our call
+```
+  async componentDidMount() {
+    const manager = await lottery.methods.manager().call();
+    this.setState({manager});
+  }
+```
+* we dont need to pass an from property to the call as metamask provider passes the selected account address by default
+* we use manager as a react component state variable as it is related to the component lifecycle. to use state we initialize it in the constructor
+```
+  constructor(props) {
+    super(props);
+
+    this.state = { manager: '' };
+  }
+```
+* we remove boilerplate jsx and replace it with
+```
+      <div>
+        <h2>Lottery Contract</h2>
+        <p>This contract is managed by {this.state.manager}</p>
+      </div>
+```
+
+### Lecture 93 - Instance Properties
+
+* we refactor constructor using JS ES2016 state declaration (we dont need constructor just to initialize state) `state = { manager: '' };`
+* babel does the translation to ES5 for us
+
+### Lecture 94 - Accessing More properties
+
+* we want to show the number that entered and the prize pool
+* we use contracts getPlayers() method to set players address array to the react component state in didMount method
+```
+    const players = await lottery.methods.getPlayers().call();
+    this.setState({manager, players});
+```
+* we get the balance using web3 inbuilt method passing the lottery contract address `const balance = await web3.eth.getBalance(lottery.options.address);`
+* balance is a JSON object and we set it as string `{web3.utils.fromWei(this.state.balance, 'ether')}`
+
+### Lecture 95 -The 'Enter' Form
+
+*  
+
+
+
