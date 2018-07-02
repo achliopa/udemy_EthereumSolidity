@@ -1364,4 +1364,32 @@ const abi = [...
 
 ### Lecture 97 - Entering the Lottery
 
-*
+* we set a new state variable *message* to inform the players whats goint on with the status of the app. 
+* in the form submit before we send the enter transaction we set a message to inform the user that he has to wait `this.setState({message: 'Waiting on transaction success...'});`
+* after the transaction is processes we set `this.setState({message: 'You have been entered!'});`
+* we add the state var in render jsx and test it. we enter the lottery metamask gui is triggered we submit the amount and success.
+* we refresh the page and see that 1 person entered the contest and the prize pool updated
+
+### Lecture 98 - Picking a Winner
+
+* we will add a button to pick a winner.
+* only manager should see it
+* we add a new section in our jsv and a button withan onClick handler
+* the onClick event handler is similar to onSubmit
+```
+  onClick = async () => {
+    const accounts = await web3.eth.getAccounts();
+    this.setState({message: 'Waiting on transaction success...'});
+    await lottery.methods.pickWinner().send({
+      from: accounts[0]
+    });
+    this.setState({message: 'A winner has been picked!'});
+  };
+```
+* we would like to know and print on the webpage who won the lottery. this has to be done in the contract with a new variable (last winner)
+
+## Section 5 - Real projects with Ethereum
+
+### Lecture 100 - Solving Real Problems with Contracts
+
+* 
