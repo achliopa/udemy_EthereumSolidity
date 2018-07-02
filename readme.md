@@ -1392,4 +1392,28 @@ const abi = [...
 
 ### Lecture 100 - Solving Real Problems with Contracts
 
+* how ethereum can help startups. the kickstarter example
+	* kickstarter helps inventors build the first prototype of their product
+	* it uses crowdfunding
+	* the inventor creates a new project or campaign
+	* there are various donation levels that give certain rewards
+	* if the inventor meets his target (total money) then he gets it
+	* once the target is met they take the money from donors and give them to the project owner
+	* The problem with Kickstarter is that some people creating campaigns are malicious. many of these projects end up failing, campaign creators go back to backewrs and say *We run out of money we cannot send you the product*
+	* Others start campaigns with no intent to deliver a product (scammers)
+
+### Lecture 101 - Fixing Kickstarter's issues
+
+* in an ideal world the campaign creator gets money from contributors and gives them to suppliers
+* the bad scenario is that the campaign creator gets money from contributors and stashes them to a private acoount to buy goods for him
+* the difference between these two scenarios is where the money goes.
+* our project contract will control where this manager can send money to
+* the money from contributors will go to the ethereum contract
+* the manager will be able to spend money from the contract by sending a spending request.
+* a spending request attempts to withdraw money from the contract and send to an external address.
+* all people that made a contribution have to vote on a spending request (to authorize the spending)
+* if the majority votes yes then send request is authorized
+
+### Lecture 102 - Campaign Contract Design
+
 * 
