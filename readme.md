@@ -1570,4 +1570,54 @@ contract Numbers {
 
 ### Lecture 113 - The wrong Voting System
 
-* 
+* antipattern: in our campaign contract we have a list of addresses of contributors. in each request struct instance we have a list of addresses of the people that have voted. also a counter of yes votes and a counter of no votes. if someone wants to vote again for a request we will look into the vote array. if we find his address we will prohibit it
+```
+function approveRequest(Request request) public {
+	// Make sure people calling this function has donated
+	bool is Approver = false;
+	for(uint i = 0; i < approvers.length; i++) {
+		if(approvers[i] == msg.sender) {
+			isApprover = true;
+		}
+	}
+	require(isApprover);
+	//Make sure person calling this function hasn't voted before
+	for(uint i = 0; i< request.approvers.length;i++) {
+		require(request.approvers[i] != msg.sender);
+	}
+}
+```
+* the cost is tremendous. its a for loop so we dont know upfront the cost (depends on array size)
+
+### Lecture 114 - Issues with Arrays
+
+* each first for loop iteration costs 10000gas, each second for loop iteration costs 5000gas
+* if we have only one contributor the cost on gas is 15000. if we have 1000 contributors the gas price is 15000000 and grows
+* if we have an array in our contract and we loop in the array we have to make sure the price stays reasonable
+* we will drop this approach of storing the contributors addresses in an array and use another struct
+
+### Lecture 115 - Mappings vs Arrays
+
+* because we always have to iterate through the full size of array we end up spending too much gas.
+* To solve the issue we use Mappings, the search time in an Array is a Linear Time search. the search time  in a mapping is constant time search
+
+### Lecture 116 - Basics of mappings
+
+* we take as example a JS object with properties being key-value pairs if i use `Object.keys(myObject)` i get an array of keys. if i use `Object.values(myObject)` i get an array of values. or `myObject['myKey']` to get the pair value. Much like python
+* Unlike JS objects or Python Dictionaries in Solidity Mappings Keys are  NOT Stored. We cannot get a list of keys
+* Solidity Mappings use hashings or hash table. 
+* the lookup process is as follows '3rdkey' => hashing function => index:3 => '3rdvalue' (solidity uses the index to return correct val) 
+* In Solidity, Mappings values are not iterable. we cannot loop through a mapping and print all the values it has. we can only do lookups using the key
+* Mappings in Solidity are good for single value lookups not iterations
+* if we pass a non existing key in the lookup of a mapping it will returna predefined default value e.g empty string. in JS we get undefined. it is a real challenge to determine if a key trully exists inba mapping
+* our final and efficient data structs will be
+	* Canpaing contrat has mapping approvers: list of addresses for every person who has donated money
+* The request struct:
+	* string description
+	* uint amount
+	* address recipient
+	* bool complete
+	* mapping approvals: track who has voted
+	* uint approvalCount: track number of approvals
+
+### Lecture 117 - Refactoring to Mappings
