@@ -1416,4 +1416,158 @@ const abi = [...
 
 ### Lecture 102 - Campaign Contract Design
 
+* The Campaign Contract contains the following variables
+	* address manager: address of the person who is managing this campaign
+	* uint minimumContribution: minimum donation required to be considered a contributor or 'approver'
+	* address[] approvers: list of addresses for every person who has donated money
+	* Request[] requests: list of requests that the manager has created.
+* The Campaign Contract contains the following functions
+	* constructor: sets the minimumContribution and the owner
+	* contribute: called when someone wants to donate money to the campaign and become an 'approver'
+	* createRequest: called by the manager to create a new 'spending request'
+	* approveRequest: called by each contributor to approve a spending request
+	* finalizeRequest: after a request has gotten eanough approvals, the manager can call this to get money sent to the vendor
+* manager has privilleged status
+* Request is a custom data type
+* approveing a request does not auto spend
+
+### Lecture 103 - Campaign Constructor
+
+* we move to remix editor to flesh out campaing contructor
+* we scrap out lottery contract. our new contract is named Campaign
+* we define manager and the constructor were we initialize it with the address of the external address that deploys the contract *msg.sender*
+* minimumCOntribution is paased as argument upon deployment
+```
+address public manager;
+uint public minimumContribution;
+    constructor(uint minimum) public {
+        manager = msg.sender;
+        minimumContribution = minimum;
+    }
+```
+
+### Lecture 104 - Contributing to the Campaign
+
+* we declare the approvers list `address[] public approvers;`
+* we implement the contribute function as a payable public function `function contribute() public payable`
+* we require a miinimum contribution to go on in the function `require(msg.value > minimumContribution);`
+* if value is enough we append the address to the approvers list `approvers.push(msg.sender);`
+
+### Lecture 105 - A quick test
+
+* we test our primal state of contract in remix
+* we deploy in Vm (passing the minammount and see the offered functions. we set minimumcontribution at 100 wei
+* we test getters and contribute func passing a value in transaction
+
+### Lecture 106 - The Request Struct
+
+* Request will be a reference type, a struct. as it will be a complex type of different elements (key valu pairs)
+a struct is like a class, anytime we want to use we instantiate it.
+* The Request struct contains:
+	* string description: describes why the request is being created
+	* uint value: amount of money that the manager wants to send to the vendor
+	* address recipient: address that the money will be sent to 
+	* bool complete: true if the request has been allready processed
+	* ??? ????: Voting mechanism
+* once the request is set to complete it can not be processed further. is locked
+```
+    struct Request {
+        string description;
+        uint value;
+        address recipient;
+        bool complete;
+    }
+```
+* this is a type definiton is not a contract var. so we cannot access it unless we make instance variables out of it
+
+### Lecture 107 - More on Function Modifiers
+
+* we declare an array od structs. `Request[] public requests;`. it behaves like an array
+* we now implement the *createRequest* method, that should be restricted only to the manager. we can use a function modifier like in lottery
+* typicaly we place function modifiers above constructor
+```
+    modifier restricted() {
+        require(msg.sender == manager);
+        _;
+    }
+```
+
+### Lecture 108 - Creating Struct Instances
+
+* we will flesh out the createRequest function . it is a public function with restricted annotation
+* the purpose of this function is to create a request instance . so we need to pass in quite a few arguments (3). the function signature is `function createRequest(string description, uint value, address recipient) public restricted {}`
+* in the function we make a new Request instance and we puch it to the array
+* the synbtax is like passing a config object in JS constructor
+```
+        Request newRequest = Request({
+            description: description,
+            value: value,
+            reciptient: recipient,
+            complete: false
+        });
+        
+        requests.push(newRequest);
+```
+
+### Lecture 109 - Instance Creation Syntax
+
+* the struct instantiation created an error
+* we break down the instantiation syntax. `Request newRequest = Request({})`
+	* `Request`: get ready to create a new variable that will contain a Request
+	* `newRequest`: the var name is newRequest
+	* `Request({})`: create a new instance of a Request
+* left hand is about storing the right is about instantiating
+* whenever we create a struct instance we have to include all its properties in the definition
+* we used a key:value pair way to declare a struct. 
+* there is another way, an alternative definition `Request(description, value, recipient, false);` passing only the values. this is based on keeping order and prone to errors
+
+### Lecture 110 - Storage and Memory
+
+* there are 2 errors from the struct declaration. one says memory and the other says storage.
+* storage & memory sometimes references where our contract stores data, sometimes references how our solidity variables store variables
+* the error we face deals with the second case (how our solidity vars store values)
+* Data Holding Places
+	* Storage: Holds data between function calls (like computer's HDD)
+	* Memory: Tempory place to store data (like computer RAM)
+* contract vars go to storage (persistent)
+* the arguments to functions are memory data
+* once function is done these data are gone
+
+### Lecture 111 - More on Storage vs Memory
+
+* to illustrate the difference between memory and storage we write a small demo contract
+```
+contract Numbers {
+	int[] public numbers;
+
+	constructor() public {
+		numbers.push(20);
+		numbers.push(32);
+
+		int[] storage myArray = numbers;
+		myArray[0]=1
+	}
+}
+```
+* we would expect if we called the array to see [20,32]
+* we add `int[] myArray = numbers;` in the constructor and get a warning
+* we add the keyword *storage* in the declaration in the constructor and the warning goes away `int[] storage myArray = numbers;` the warning now says unused local var. thats ok
+* in our declaration `int[] storage myArray = numbers;` *numbers* refers to a contract variable stored in teh storage.
+* by adding the storage keyword it changes the way the temp variable myArray is stored. it makes it point in the same location where the numbers variable points at (in storage)
+* to prove it in the constructor we set `myArray[0]=1`
+* we deploy the contract and call numbers. what we get is [1,32]
+* if instead of the keyword storage we use *memory* a new temp memory location is reserved for the myArray in location different than *numbers*. in this location a copy of the numbers array will be placed. this memory gets dumped whenb the function returns
+* so if we use memory and deploy when we call numbers we get [20,32]
+* Why we might care abount storage?
+* when we pass a var in afunc as an argument and change its value, when we call the var outside the function the value is lost unless we use a keyword storage. this behaviour is like we used memory keyword in the function argument `function changeASrray(int[] memory myArray private {}`
+* in our case we have to use memory keyword for Request as the Request on the right side is stored in memory so storage would have no point (error)
+
+### Lecture 112 - Voting System Requirements
+
+* requirements for voting system:
+	* we have to make sure that a single contributor cannot vote multiple times on a single spending request
+	* the voting system must be resilient to support thousands of voters (hundrends of thousands)
+
+### Lecture 113 - The wrong Voting System
+
 * 
