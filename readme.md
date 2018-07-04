@@ -1621,3 +1621,24 @@ function approveRequest(Request request) public {
 	* uint approvalCount: track number of approvals
 
 ### Lecture 117 - Refactoring to Mappings
+
+* we start refactoring the campaign contract.
+* we will define a mapping to replace address[] list of approvers
+* the mapping will map address => bool and will be named approvers
+true will mean that this person has paid the contribution
+* the reason why we mark them as true is that solidity autocompeletes a default value when we add a new element to a mapping without setting a property. the default for boolean is false
+* if we lookup an address in amapping that does not exist we get false.
+* the addresses dont really exist per se in the mapping . only the reference
+```
+mapping(address => bool) ppublic approvers;
+```
+* approvers.push complains as push is a list method.we replace it with mapping.
+```
+approvers[msg.sender] = true;
+```
+* in mapping only the true exists not the address
+* to test for existence in mapping `approvers[msg.sender` will return true if exists and false otherwise (no errors)
+
+### Lecture 118 - Refactoring Request Structs
+
+* 
