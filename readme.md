@@ -1630,7 +1630,7 @@ true will mean that this person has paid the contribution
 * if we lookup an address in amapping that does not exist we get false.
 * the addresses dont really exist per se in the mapping . only the reference
 ```
-mapping(address => bool) ppublic approvers;
+mapping(address => bool) public approvers;
 ```
 * approvers.push complains as push is a list method.we replace it with mapping.
 ```
@@ -1640,5 +1640,148 @@ approvers[msg.sender] = true;
 * to test for existence in mapping `approvers[msg.sender` will return true if exists and false otherwise (no errors)
 
 ### Lecture 118 - Refactoring Request Structs
+
+* in the request struct we add 2 new fileds
+	* a `uint approvalCount;` to count the yes votes
+	* a mapping to keep track if a voter has voted `mapping(address => bool) approvals`
+
+### Lecture 119 - More on Struct Initialization
+
+* after adding more fields to the struct we have an error to the line where we instantiate a struct as we are missing fields. we need to intialize all
+* initializing the approvalCount is easy. we set it to 0 `approvalCount: 0`
+* when we initialize a struct we have to initialize value types. we dont have to initialize reference types like mappings
+* we dont need the no vote counts as when we will need to make a decision we will compare the yes votes count against the number of possible votes
+
+### Lecture 120 - Approving a Request
+
+* the goal of approveRequest function is to approve a specific request
+* whenever someone calls the function he has to pass in which request he wants to approve
+* we can pass the index of the request in the requests list `approveRequest(1)`
+* even though we have an array its not expensive because we dont search. we go directly to the element by index
+* in this function we have to make sure the person who is calling to approve has donated to the campaign (we is in the mapping of approvers)
+* we also have to check that this person has not voted before (he dont exists in the approvals mapping)
+* if both conditions hold we add him to the approvals mapping and increase the counter
+* we avoid going into the array to do indexing 3 times in the func by assigning a local var but with the storage keyword as we want the changes in the struct to take place in the actual persistent array outside the func
+```
+function approveRequest(uint index) public {
+	Request storage request = requests[index];
+	require(approvers[msg.sender]);
+	require(!request.approvals[msg.sender]);
+	request.approvals[msg.sender] = true;
+	request.approvalCount++;
+}
+```
+
+### Lecture 121 - Testing Request Approvals
+
+* we test the new func in remix, by deploying, make a donation,  creating a request, approve and attempt to reaprove
+
+### Lecture 122 - Finalizing a Request
+
+* we flesh out the finalizeRequest() func
+* we mark it as public and add the restricted modifier as only the manager can call it
+* we need to pass the request index as an input argument
+* inside the func
+	* we have to make sure the request is not flagged as complete
+	* we need to flag request as complete.
+	* again we need to make a local var Request stored in persistent storage like the previous function
+	* we need to make sure the request has enough approvals
+	* as we cannot operate on the approvers mapping to get its size we add one more var to keep track of the approvers number `uint public approverCount;` we increment this count in contribute function
+	* we we add one more check where we compare the two counters
+	* finally we send the request money to recipient
+	```
+    function finalizeRequest(uint index) public restricted {
+    	Request storage request = requests[index];
+    	require(request.approvalCount > (approversCount / 2));
+    	require(!request.complete);
+    	request.recipient.transfer(request.value);
+    	request.complete = true;
+    }
+	```
+
+### Lecture 123 - Last Remix Test
+
+* again we deploy, contribute, create request approve and finalize
+
+### Lecture 124 - Thinking About Deployment
+
+* we want to make a frontend like kickstarter.
+* kickstarter has a list of 36000 campaigns. 
+* we need to find a way to create a massive amount of demo contracts for testing the app
+* whenever we deploy a contract, we deploy an instance of it to the network
+* each deployed contract has a unique address
+* there is no connection between them.
+* we need to keep track of our contracts addresses in our app to be able to show them to our clients
+* we need to have good grasp of the deployment process so that we dont miss info
+* Possible Flow 1:
+	* user clicks "CreateCampaign"
+	* we send user (browser) the contract source code
+	* user deploys contract (metamask), gets address back
+	* user sends us address of newly deployed campaing contract
+	* user sends us address, we publish new address on our site
+* THIS FLOW HAS A BIG FLAW: user can modify contract code and remove security restrictions
+* Possible Flow 2: 
+	* user clicks "create campaign"
+	* we deploy a new campaign, get address back
+	* we publish new campaign on the site
+* THIS FLOW is Secure but WE PAY for deployments. if the user abuses the button we get charged REAL MONEY
+
+### Lecture 125 - Solution to Deployment
+
+* we present a hybrid approach:
+	* we create a 'factory' contract. it has a function to deploy a new instance of 'Campaign'
+	* time passes .....
+	* User clicks 'Create Campaign'
+	* we instruct web3/metamask to show user a transaction that invokes Campaign Factory
+	* User Pays deployment costs. Factory deploys a new copy of Campaign
+	* We tell 'Campaign Factory' to give us a list of all deployed campaigns
+* soin essence we have to write a second contract. a contract can deploy anohter contract
+* The facory contract is deployed by us, it contains the campaign source. it exposes two functions
+	* to our site => give me the addresses of all deployed contracts
+	* to the user => i want to create anew contract. + money
+* the factory contract deploys campaign and stores their addresses
+
+### Lecture 126 - Adding A Campaign Factory
+
+* our factory contract we have variables:
+	* address[] deployedCampaigns: addresses of all deployed campaigns
+	* 
+* fucntions
+	* createCampaign: deploys a new instance of a campaign and stores the resulting address.needs minimumcontribution as input argument
+	* getDeployedCampaigns: returns a list of all deployed campaigns
+* we create our new contract in teh same solidity file. above the campaigns
+* to deploy a contract in solidity `address = new Campaign(minimum);`
+* in cmapign contractor we use the senders addreess to store it a s amanager. now the sender is the factory contract. we dont want that.
+* we need to pass the sender of the facory method to the campaign contructor ` address newCampaign = new Campaign(minimum,msg.sender);`
+* also we need to modify the constructor in campaign source code so that it uses the address passed as an argument from the factory
+```
+    constructor(uint minimum, address creator) public {
+        manager =creator;
+        minimumContribution = minimum;
+    }
+```
+* we add the getDeployedCampaigns function. the compete contract is
+```
+contract CampaignFactory {
+    address[] public deployedCampaigns;
+    
+    function createCampaign(uint minimum) public {
+        address newCampaign = new Campaign(minimum,msg.sender);
+        deployedCampaigns.push(newCampaign);
+    }
+    
+    function getDeployedCampaigns() public view returns(address[]) {
+        return deployedCampaigns;
+    }
+}
+```
+
+### Lecture 127 - Testing the Factory
+
+* we compile, run, deploy campaign factory. createcampaign => getDeployedmapaigns cp address and find the deployed campaign
+
+## Section 6 - Ethereum Project Infrastructure
+
+### Lecture 128 - Project Setup
 
 * 
