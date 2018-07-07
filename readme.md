@@ -1784,4 +1784,250 @@ contract CampaignFactory {
 
 ### Lecture 128 - Project Setup
 
+* before moving to frontend we will test our contracts with mocha
+* we create a new project folder named *kickstart* 
+* we npm init in it
+* we npm install the necessary packages `npm install --save ganache-cli mocha solc fs-extra web3@1.0.0-beta.26`
+
+### Lecture 129 - Directory Structure
+
+* we look into our previous projects. we ha in root folder the deploy and compile scripts and two folders the contracts folder withthe sol files and the test folder with the mocha test files
+* in this project we will keep the frontend in the ame project pfolder. so we put our scripts in a separate folder called ethereum
+* in there we create our scripts *compile.js* *deploy.js* and our contracts folder
+* in the contracts folder we add the *Campaign.sol* solidity file
+* we cp all solidity code from remix into the .sol file
+
+### Lecture 130 - A Better Compile Script
+
+* in the lottery project: we find the contract  solidity file => we read it  => we feed the contents to the solidity compiler => we export the compiled contract
+* with this approach EVRY time we start the project we recompile the contract
+* to save time we will compile onece, store the output to a file and use that instead in the project.
+* we have now one file with 2 contracts. we pass that to solc and get 2 compiled contracts which we will save to project dir
+* we will store them to a build subfolder in ethereum folder.  the flow of compilation will be:
+	* delete entire *build* folder
+	* read solidity file from *contracts* folder
+	* compile both contracts with solc
+	* write output to *build* dir
+
+### Lecture 131 - Single Run Compilation
+
+* we import the modules in compile.js
+```
+const path = require('path');
+const solc = require('solc');
+const fs = require('fs-extra');
+```
+* we use fs-extra as it offers more functionality than fs (delte files/folders)
+* we find and delete build directory
+```
+const buildPath = path.resolve(__dirname, 'build');
+fs.removeSync(buildPath);
+```
+* we find, read and compile the solidity file
+```
+const campaignPath = path.resolve(__dirname,'contracts','Campaign.sol');
+const source = fs.readFileSync(campaignPath,'utf8');
+const output = solc.compile(source,1).contracts;
+```
+* the output contains 2 separate objects , 1 for each contract
+* we will store them into two different files
+* we first create the build folder and create the 2 files
+```
+fs.ensureDirSync(buildPath);
+
+for (let contract in output) {
+	fs.outputJsonSync(
+		path.resolve(buildPath, contract + '.json'),
+		output[contract]
+	);
+}
+
+```
+* we run the script `node compile.js`
+* our files get created with the follwoing filename format `:Campaign.json`
+
+### Lecture 132 - More on Compile
+
+* we will focus on the for loop to explain it
+* we console.log the copile output
+* it contains two top level objects with a key *:CampaingFacory* and *:Campaign* and a value that is the actual compiled contract
+* so it is iterable and we can loop through it
+* we use the key to form the filename
+* the second argument in the *outputJsonSync* method is `output[contract]`
+* this is the actual content of the file
+* as the top level obejct is iterable w/keys we canuse the array syntax
+* we remove the : in filename w/ `contract.replace(':','')
+
+### Lecture 133 - Test File Setup
+
+* we create a new folder for tests *test* in the root project folder (same level as ethereum)
+* the reason for placing it there is that we want to have all our tests in one side (frontside + ethereum)
+* we create a test file for Campaign as CampaignFactory is minimal and not worthy ofa separate test file
+* or prep code is like lottery, we test with ganache, we import both contract files
+```
+st assert = require('assert');
+const ganache = require('ganache-cli');
+const Web3 = require('web3');
+
+const web3 = new Web3(ganache.provider());
+
+const compiledFactory = require('../ethereum/build/CampaignFactory.json');
+const compiledCampaign = require('../ethereum/build/Campaign.json');
+```
+* at before each like before we get an acount from ganache and use it to deploy our contract (Facrtory)
+```
+beforeEach(async () => {
+	accounts = await web3.eth.getAccounts();
+	factory = await new web3.eth.Contract(JSON.parse(compiledFactory.interface))
+	.deploy({data: compiledFactory.bytecode})
+	.send({from: accounts[0], gas: '1000000'});
+});
+```
+
+### Lecture 134 - Creating Campaign instances
+
+* the purpose of out test is to test campaings so each test will need a campaign to operate. 
+* instead of every time going through factory to get the address and then find the contract in the network we store upfront in a global variable
+* we use the createCampaign method in the factory at before each to make a campaign
+```
+	await factory.methods.createCampaign('100').send({
+		from: accounts[0],
+		gas:  '1000000'
+	});
+```
+* we get the campaignaddress from factory method using ES2015 array destructuring
+* we get a JS representation of the deployed campaign contract with the same constructor we used to deploy with web3 but this time we pass the address as a 2nd argument to tell it that we want to connect toan already deployed contract
+```
+	[campaignAddress] = await factory.methods.getDeployedCampaigns().call();
+	campaign = await new web3.eth.Contract(
+		JSON.parse(compiledCampaign.interface),
+		campaignAddress
+	);
+```
+
+### Lecture 135 - Testing Warmup
+
+* our first test just tests for deployment
+```
+describe('Campaigns', () => {
+	it('deploys a factory and a campaign', ()=>{
+		assert.ok(factory.options.address);
+		assert.ok(campaign.options.address);
+	});
+});
+```
+* again we replace the test script in package.json with mocha `test": "mocha"` and run `npm test`
+
+### Lecture 136 - Accessing mappings
+
+* what we wnat to test?
+* the person who creates the campaign from f actory should be the manager
+```
+	it('marks caller as the campaign manger', async () => {
+		const manager = await campaign.methods.manager().call();
+		assert.equal(accounts[0],manager);
+	});
+``` 
+* people shoud be able to donate money to campaign and be contributors, call contibute methods, confirm address in approvers
+* approvers mapping is public so exposes a getter which return the map result (a bool)
+```
+	it('allows  people to contribute money and marks them as approvers', async () => {
+		await campaign.methods.contribute().send({
+			value: '200',
+			from: accounts[1]
+		});
+		const isContributor = await campaign.methods.approvers(accounts[1]).call();
+		assert(isContributor);
+	});
+```
+
+### Lecture 137 - Requiring Minimum Contributions
+
+* we use the try catch method we used at lottery
+```
+	it('requires a minimum contribution', async () => {
+		try {
+			await campaign.methods.contribute().send({
+				value: '5',
+				from: accounts[1]
+			});
+			assert(false);
+		} catch (err) {
+			assert(err);
+		}
+	});
+```
+
+### Lecture 138 - Array Getters
+
+* we want to test that a manager make a payment request
+```
+	it('allows a manager to make a payment request', async () => {
+		await campaign.methods
+			.createRequest('Buy batteries', '100', accounts[1])
+			.send({
+				from: accounts[0],
+				gas: '1000000'
+			});
+
+		const request = await campaign.methods.requests(0).call();
+		assert.equal('Buy batteries', request.description);
+	});
+```
+
+### Lecture 139 - End to End Test
+
+*  we test: take campaign -> contribute to it -> make request -> approve request -> finalize request -> asser money went to destination
+```
+	it('processes requests', async () => {
+		await campaign.methods.contribute().send({
+			from: accounts[0],
+			value: web3.utils.toWei('10','ether')
+		});
+
+		await campaign.methods
+			.createRequest('A', web3.utils.toWei('5','ether'), accounts[1])
+			.send({
+				from: accounts[0],
+				gas: '1000000'
+			});
+
+		await campaign.methods.approveRequest(0).send({
+			from: accounts[0],
+			gas: '1000000'
+		});
+
+		await campaign.methods.finalizeRequest(0).send({
+			from: accounts[0],
+			gas: '1000000'			
+		});
+
+		let balance = await web3.eth.getBalance(accounts[1]);
+		balance = web3.utils.fromWei(balance, 'ether');
+		balance = parseFloat(balance);
+
+		assert(balance > 104);
+	});
+```
+* in ganache accounts start with 100 ether. so we estimate how much he will have after test
+
+### Lecture 140 - Deployment
+
+* with tests passing we cna now deploy our contract to Rinkeby. we cp the deploy script from lottery project and pasteit to * deploy.js
+* its like lottery we use infura plugin and HDwallet from truffle
+* we install the truffle module `npm install --save truffle-hdwallet-provider`
+
+### Lecture 141 - Refactoring Deployment
+
+* in lottery we did compile on the fly. now we need to use our precompiled files
+* we will only deploy the factory. we change our import ans our ABI,bytecode vars to point to compiledFactory. we console log the address (IMPORTANT)
+* we deploy with `./ethereum/node deploy.js` and cp the address from terminal
+* it uses our metamask account in rinkeby
+* our contract is deployed at 0x131D0d48D54FaEbfe8bbab586B2dd63c3245E0Db
+* we make a new file in project root called *ADDRESS*. DONT do it in production
+
+## Section 7 - Advanced Multi-Page Front Ends
+
+### Lecture 142 - App Mockups
+
 * 
