@@ -2030,4 +2030,116 @@ describe('Campaigns', () => {
 
 ### Lecture 142 - App Mockups
 
+* we will use React again!
+* we will  make a Kickstarter clone
+	* browse campaings, create campaigs
+	* we will call it CrowdCoin
+	* the nav bar will have logo + campaings 9see the list) btn + createcampaign button
+	* the landing page will list open campaigns + create campaign button
+	* the user will be able to click on campaign and view details
+	* the create camapign page will ask minimum contribution limit and provide button create
+	* make user aware of wait time
+	* a create campaign will provide more details (requests, contribute button, balance, contributors)
+	* pending requests will show a table, approval button and finalize button, approval count
+	* request create form
+* Routing:
+	* / : List of Campaigns
+	* /campaigns/new : Form to make a campaign
+	* /campaigns/0x8147 : Campaign details for campaign at address 0x8147
+	* /campaigns/0x8147/requests : requests for campaign at address 0x8147
+	* /campaigns/0x8147/requests/new : form to create a request for campaign at address 0x8147
+
+### Lecture 143 - CRA vs Next
+
+* in previous app (lottery) we used *create-react-app* to make us the boilerplate react project to start from.
+* we wanted to build a simple react app
+* by default CRA does NOT include navigation, dat aloading etc
+* for this app we will use instead [Next.js](https://nextjs.org/)
+* Next.js is a framework that wraps up React + tools in one package
+* It includes a lot of feats out-of-the-box (Routing,Server Side Rendering, Hot module Reload)
+* Makes it really easy to use React to make a multipage application
+* docs available at [github repo](https://github.com/zeit/next.js/)
+* it is selected for ease of use.
+
+### Lecture 144 - Next's pages Architecture
+
+* we install dependencies at project root. `npm install --save next@4.1.4 react react-dom`
+* the codebase with next is organized as follows:
+	* .next : auto created and managed by framework
+	* pages : react components that get turned into a visitable webpage, each file we put there (react componet) gets turned to a page with routes and all
+
+### Lecture 145 - Basics of Νext Routing
+
+* we create a *pages* folder
+* we make a *show.js* and *newcampaign.js* file in pages
+* we create and export a React Component in each file
+* we add a dev script in package.json `"dev": "next dev"`
+* we run `npm run dev` and app is launched at localhost:300
+* we visit `localhost:3000/show` and `localhost:3000/newcampaign` and see our dummy pages rendered 
+* so we can visit any page that exists in the pages folder
+
+### Lecture 146 - Root Routes
+
+* we will start building the landing page at root route
+* in next the root route is implemented in index.js
+* our to do list for the Campaign List Page
+	* configure web3 with a provider from metamask
+	* tell web3 that a deployed copy of the 'CampaignFactory'
+	* Use Factory instance to retrieve alist of deployed campaigns
+	* Use React to render sthing about each campaign
+
+### Lecture 147 - CampaignFactory Instance
+
+* we make a new instance of web3 that uses metamask provider
+* in ethereum folder we make a *web3.js* file
+* the approach is the same as in lottery project
+```
+import Web3 from 'web3';
+const web3 = new Web3(window.web3.current);
+export default web3;
+```
+* we wnat to decouple from metamask to add flex to our app. we will handle that later
+* we make a new file for a JS represenatation of the deployed Factorty contract (factory.js)
+```
+import web3 from './web3';
+import CampaignFactory from './build/CampaignFactory.json';
+
+const instance = new web3.eth.Contract(
+	JSON.parse(CampaignFactory.interface),
+	'0x131D0d48D54FaEbfe8bbab586B2dd63c3245E0Db'
+);
+export default instance;
+```
+
+### Lecture 148 - Getting a Test Campaign
+
+* In Rinkeby we have deployed only the Factory not a campaign so we have nothing to render. 
+* we will use Remix to create a Campaign in Rinkeby. we need the solidity code, we set environment to rinkeby, select factory and use the address (press at adress)
+* our contract is retrieved so we can use it to create a campaign
+* we enter a minimum contribution and click createCampaign
+
+### Lecture 149 - Fetching Deployed Campaigns
+
+* in our index.js (landpage) we will create the list of campaigns in react
+* we import factory contract instance JS representation
+* we refactor the react functional component to a class one as we need lifecycle methods and its state
+* we add alifecycle method (didMount) to fetch the campaigns from factory
+* we export the compoent
+* we run dev and see an error (with next we need to reload). window is not defined
+
+### Lecture 150 - Why Next.js, Anyway?
+
+* Create-React-App runs a server that takes all our code and serves it up to the browser
+* The browser took that bundle and executed it
+* Next.js uses server side rendering. next will try to render the page itself. our js code is executed in next.js server. next builds the html document and ships it to browser
+* the difference of the next approach is that user sees content much faster (the first time)
+* the next server after sending the html code (which is renders) sends the js conde with gets booted up in the browser and takes over
+* so genrally is better for slow connections
+* so in Next our code is first executed in the server so there is no window there
+* window is avaliable on browser only
+* also it is wrong approach to assume that people run metamask on their browser to be able to render our app (with no bugs)
+* this is the reason we use next. when we first load our up in server we will fetch all data from ethereum with our account (its free) withough require people to have connection to ethereum and metamask. Server SIde rendering so IS THE WAY
+
+### Lecture 151 - Server vs Client Web3 Instances
+
 * 
