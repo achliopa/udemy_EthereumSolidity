@@ -2142,4 +2142,199 @@ export default instance;
 
 ### Lecture 151 - Server vs Client Web3 Instances
 
+* so our app code gets rendered 2 times . one in the server and one in the browser
+* we will refactor web3.js so that it can be run error free in server and browser
+* the refactor code looks like
+```
+let web3;
+
+if (typeof window !== 'undefined' && typeof window.web3 !== 'undefined') {
+	// We are in the browser and metamask runs
+	web3 = new Web3(window.web3.currentProvider);
+} else {
+	// We are on the server Or the user is not running metamask
+	const provider = new Web3.providers.HttpProvider(
+		'https://rinkeby.infura.io/e67hJgUvQ6JGIx3MgWzW'
+	);
+	web3 = new Web3(provider);
+}
+```
+* so we check to see if we are running in browser and browsert has an instance of web3 (metamask)
+* if yes we use the metamask provider
+* if not we use the infura provider to the infura ethereum node we are useing to deploy (the lik we cp from deploy.js) passing our API key. we use it to set a new provider and use it to make a web3 server instance
+* this is ok as we will use it to make only free calls to retrieve data
+* now we get the campaign address logged to the browser terminal so all OK
+
+### Lecture 152 - GetInitialProps Function
+
+* in a traditional react app fetching data at componentDidMount lifecycle method is OK
+* next.js introduces more constrains as it does server side rendering and sends compiled HTML to browser before sending the code for frontside rendering.
+* in the server side rendering componentDidMount is not called so the hTML has no data
+* next server side uses getInitialProps. to get init data and feed them to the Component for rendering
+* getInitialProps is defined as static (class function) so is called as CampaignIndex.getInitialProps(). in that way next.js gets the data without having to instantiate/render the React Component which is computational intensive
+* the feed of data from this function is by returning them in an object, whatever we return are passed in the component as props and are called in the vcomponent as props
+```
+class CampaignIndex extends Component {
+	static async getInitialProps() {
+		const campaigns = await factory.methods.getDeployedCampaigns().call();
+
+		return { campaigns };
+	}
+
+	render() {
+		return <div>{this.props.campaigns[0]}</div>;
+	}
+}
+```
+* we run our code. it works (we need to refresh the page though)
+* we can test our server side rendering if we disable js execution in the browse
+* the page works... server fetches data ok
+
+### Lecture 153 - Semantic UI React
+
+* for styling we will use a react component kit called [Semantic UI React](https://react.semantic-ui.com)
+* we stop the next server and install the package `npm install --save semantic-ui-react`
+
+### Lecture 154 - Card Group Setup
+
+* semantic ui suggest intallation with yarn
+* the component we install give the js part not the css part
+* we can add add css as a link tag in html or as a npm/yarn package and import it
+* we will use the card component for our campaign boxes, more specificaly the card group
+```
+import React from 'react'
+import { Card } from 'semantic-ui-react'
+
+const items = [
+  {
+    header: 'Project Report - April',
+    description: 'Leverage agile frameworks to provide a robust synopsis for high level overviews.',
+    meta: 'ROI: 30%',
+  },
+  {
+    header: 'Project Report - May',
+    description: 'Bring to the table win-win survival strategies to ensure proactive domination.',
+    meta: 'ROI: 34%',
+  },
+  {
+    header: 'Project Report - June',
+    description:
+      'Capitalise on low hanging fruit to identify a ballpark value added activity to beta test.',
+    meta: 'ROI: 27%',
+  },
+]
+
+const CardExampleGroupProps = () => <Card.Group items={items} />
+
+export default CardExampleGroupProps
+```
+* we will loop over the returned addresses from factory and create item objects passign the m to an array which we will render
+
+### Lecture 155 - Rendering Card Groups
+
+* we implement the renderCamapigs method in camapind index comp.
+* we iterate throughthe campaigns array (props) and use the map method to make the card items to render
+* we use fluid property to make cards stretch horizontaly
+```
+	renderCampaigns() {
+		const items = this.props.campaigns.map(address => {
+			return {
+				header: address,
+				description: <a>View Campaing</a>,
+				fluid: true
+			};
+		});
+
+		return <Card.Group items={items} />;
+	}
+```
+* we add the method to render jsx
+* we need the css
+
+### Lecture 156 - Adding CSS
+
+* we cp the cdn link tag from semantic-ui site *<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css"></link>*
+* we add the link tag to the render method (this is a hack ant temporal)
+
+### Lecture 157 - Adding a Button
+
+* we will add a button to create a campaign
+* we use semantic ui -> button -> labeled icon
+```
+import React from 'react'
+import { Button } from 'semantic-ui-react'
+
+const ButtonExampleLabeledIconShorthand = () => (
+  <div>
+    <Button content='Pause' icon='pause' labelPosition='left' />
+    <Button content='Next' icon='right arrow' labelPosition='right' />
+  </div>
+)
+
+export default ButtonExampleLabeledIconShorthand
+```
+* we add a button in our render funtion and import it
+* the button is placed in wrong position
+
+### Lecture 158 - The Need for a Layout
+
+* we want to show a header common to all pages and a page title
+* we dont want to put the component at each page source file component render func
+* we want to have  elements common to all pages
+* with Next.js its not easy to do
+* we will make a separate folder at project called *components* 
+in this folder we will add a Layout.js file with reusable components. 
+* we will import this file in our index.js and use the reusable components
+
+### Lecture 159 - The Layout Component
+
+* we create the folder and the layout file
+* we dont want to import layout components in each page.
+* we want pages jsx to be injected in the layout as it has the general structure of the page
+* we will use react's child system to do it
+* we want to use layout in each page and swap a part of the layout with each pages content
+* to the campaign list will be a child of layout
+* to test thsi functionality we export layout as a functional component
+```
+export default (props) = > {
+	return (
+		<div>
+			<h1>I am header</h1>
+			{props.children}
+			<h1>I am footer</h1>
+		</div>
+	);
+};
+```
+* we use the props children to render between header and footer
+* we import lyout in index.js
+* we wrap out CampaingIndex jsx in render() with <Layout></Layout>
+* *WHEN WE WRAP JSX by a React Component the JSX is available to this compoentn as props.children*
+
+### Lecture 160 - Assembling a Header
+
+* we will use semantic-ui navbar for header. it is called Menu 
+* we make a new file in components called Header.js to host our code
+* we replicate code to create a simple header and export it as functional component
+```
+	return(
+		<Menu>
+			<Menu.Item>
+				CrowCoin
+			</Menu.Item>
+
+			<Menu.Menu position="right">
+				<Menu.Item>
+					Campaigns
+				</Menu.Item>
+				<Menu.Item>+</Menu.Item>	
+			</Menu.Menu>
+		</Menu>
+	);
+```
+* we import it at layout
+* our header renders and the page renders inside. though we need a container to limit width
+
+### Lecture 161 - Constraining Content Width
+
 * 
