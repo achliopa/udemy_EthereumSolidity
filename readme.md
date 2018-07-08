@@ -2337,4 +2337,113 @@ export default (props) = > {
 
 ### Lecture 161 - Constraining Content Width
 
+* semantic ui solves that: container. we put it to layout
+* we import and wrap all JSx with Container component
+* we would like some margin over the header
+* we can add custom css to react compoennts passing it as a style prop in an object literal `style={{marginTop: '10px'}}`
+
+### Lecture 162 - Two Column Layout
+
+* we use a semantic-ui property to float our button to right `floated="right`
+* we allso put the carggrop render func beneath the button in index jsx
+
+### Lecture 163 - Nested Routing
+
+* we will build a new page to help users build campaigns on their own
+* the page will have a form
+* we add a new page (new file in pages dir)
+* our new page should listen to */campaigns/new* url route. and we said thait our page file name is the route... this is a conflict
+* we solve nested routing by using subfolders...
+* we make a subfolder named campaigns
+* in there we add new.js and add a boilerplate React Class Component named CamapignNew which we export
+
+### Lecture 164 - Final CSS Fix
+
+* we import Layout component in our new page and wrap the jsx code with it 
+* the rendered page has no styling... we had hardcoded it in index jsx that why
+* we need to move linktag to a permanet location that will always be included in our rendered html
+* we put it in Layout file in the render func after Container component
+* this is still a hack. we want the link tag in the html head tag and not the body
+* we import a helper in Layout.js `import Head from 'next/head`;
+* this Head is a next helper component. what we put in this component goes to the html head
+* so we wrap our link tag with head
+* we can use Head to add metatags for SEO purposes
+
+### Lecture 165 - Form Creation
+
+* we will use semantic-ui-react => collections => form
+* semantic uses Form React component as wrapper
+* we import Form and Button components in new.js
+* we add jsx
+```
+				<Form>
+					<Form.Field>
+						<label>Minimum Contribution</label>
+						<input/>
+					</Form.Field>
+					<Button primary>Create!</Button>
+				</Form>
+```
+* and see it rendered on screen
+
+### Lecture 166 - Input Change Handlers
+
+* we dont know if our contribution is in wei or ether
+* we will use semantic ui -> input -> labeled to add a label for clarity
+* we add component state to capture user input in form and the Input event handler as inline arrow func
+```
+	<Input 
+		label="wei"
+		labelPosition="right"
+		value={this.state.minimumCOntribution}
+		onChange={event => this.state.setState({minimumContribution: event.target.value})}
+	/>
+```
+
+### Lecture 167 - Form Submittal
+
+* we add an event handler for form submission
+* we prevent default behaviour
+* we will call facotory contract instance in rinkeby to use its campaigncreate method to create a campaign
+* this function will be paid by the users
+* to send the transaction we need to specify gas. we used to set a value 1000000
+but as we expect our users to have metamask , metamask calculates the gas with acuracy so we dont specify gas
+* we need the account for send transaction. we import web3 from web3.js we get the accounts and pass the first one in the call
+```
+
+	onSubmit = async (event) => {
+		event.preventDefault();
+
+		const accounts = await web3.eth.getAccounts();
+		await factory.methods
+			.createCampaign(this.state.minimumContribution)
+			.send({
+				from: accounts[0]
+			});
+	};
+```
+
+### Lecture 168 - Testing Submittal
+
+* we test the code
+* we need to be logged in metamask and in rinkeby
+* if we reject transactio in metamask or enter letters we get console errors in browser
+* we have no notification to users that something went wrong
+* we also want a spinner while user is waiting
+
+### Lecture 169 - Form Error Handling
+
+* we will use try cattch to wrap our both ethereum calls and print the errot to the form
+* we store the errorMessage to the component state
+* we use semantic ui => collections => message => variations => negative/error `<Message error header="Oops!" content={this.state.errorMessage}/>`
+* we test but dont see an message, semantic ui needs to use an error prtop to the Form so that ewrrors show up. it works but when we refresh the error message persists
+* it works but we get wrning because we pass string to ewrror prop which expects a bool we fix by adding !! `<Form onSubmit={this.onSubmit} error={!!this.state.errorMessage}>`
+
+### Lecture 170 - Button Spinners
+
+* semantic ui has spinners => button => states -> loading
+* spinner uses a prop called loading . we add it to component state to control it from our handler, we set it tru before our awaits and set it false after. in button we pass it as prop `<Button primary loading={this.state.loading}>Create!</Button>3`
+
+### Lecture 171  - Routing Issues
+
 * 
