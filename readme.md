@@ -2446,4 +2446,78 @@ but as we expect our users to have metamask , metamask calculates the gas with a
 
 ### Lecture 171  - Routing Issues
 
-* 
+* after we make a campaign we should be rerouted to the index page with campaign list
+* next.js is easy to make routes but has a big problem (another one?!>?)
+* we have done 2/5 of routes the other 3 are parametrical, use a variable in the url
+* next.js does not have support out of the box for this variables in url for dynamic routing
+* we will use a module for dynamic routing. its called *next-routes* 
+* we install it `npm install --save next-routes`
+
+### Lecture 172 - Next Routes Setup
+
+* we read the docs in github for next-routes
+* we will make a routes.js file to define our different routes (custom routes or dynamic routes with tokens)
+* we also have to make a server.js file is used to tell next.js to use the routes.js file. the server.js manual boots up the next.js app and tells it to use the routes.js file
+* routes exports navigation helpers to allow components to automaticaly navigate our user in the app
+* we want this helper to navigate after creating the campaign
+* in the project root we create the routes.js
+* we import next-routes library. the import requires parentheses. so it immediately invokes a function and get the return statement. `const routes = require('next-routes')();`
+* we export the route object without adding routes yet. the object contains the helpers for auto routing
+* we add a server.js file at project root and cp the code from next-routes docs ingithub
+* we customize our startup script in package.json to tell next to use server.js `    "dev": "node server.js"`
+* we restart the server
+
+### Lecture 173 - Automatic navigation
+
+* the routes object we export from routes.js contains helper functions for auto routing
+* we import these helpers in new campaign page source file `import { Link, Router } from '../../routes';`
+* Link is used in anchortags to do navigations using the react router
+* we only use Router to redirect. after our ethereum transaction completes we redirect with `Router.pushRoute('/');` to root url
+* we test it and it works
+
+### Lecture 174 - Header Navigation
+
+* in Header we import the Link helper to implement links
+* we would like to put ethe link in a mEnu.Item but their styling clashes with awkward results . so we replace Menu>item compeltely with Link component
+* Link is a wrapper providing a click event handler to its children it wraps anchor tags
+```
+			<Link route="/">
+				<a className="item">
+					CrowdCoin
+				</a>
+			</Link>
+```
+* we cp the link code to make the other 2 header buttons
+
+### Lecture 175 - Routing to Campaigns
+
+* we want to do auto routing from cmapign crweate button at index page.
+* we import the Link helper in index.js
+* we wrap or Button with Link tag and anchor
+```
+					<Link>
+						<a>
+							<Button
+								floated="right"
+								content="Create Campaign"
+								icon="add circle"
+								primary
+							/>
+						</a>
+					</Link>
+```
+* the Link tag giver react routing capabilities, the a tag the ability to right click and open new tab
+* we wrap the a tag in renderCampaign items map object with Link tag. this must have a dynamic route `<Link route={`/campaigns/${address}`}>` to go to the specific campaign page
+* we test it and routing works ok. the url is built correctly. but the page is no existent
+
+### Lecture 177 - Route Mappings
+
+* we create a new file at */pagescampaigns/* subfolder named show.js to impelemtn the particular campagin page and make a boilerplate React Class Component (CampaignShow) which we export
+* in routers.js we will ad the routing rule for this custom route
+* the rule is `routes.add('/campaigns/:address','/campaigns/show');` where we add a custom route saying that the component at /camapigns/show file in our project is linked wioth the /campaigns/:address route where :address is a wildcard a parameter
+* we test it and it works
+* if we go to root page and click onthe CreateCampaign button it takes us to the campaignshow page so its link  is broken
+* why this happens? because the router treas new as an address as the pattern is the same
+* we will solve it by adding one more mapping for this page. this mapping has to be added before the generic one
+
+### Lecture 178 - Planning CampaignShow
