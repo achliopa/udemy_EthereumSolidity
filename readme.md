@@ -2521,3 +2521,170 @@ but as we expect our users to have metamask , metamask calculates the gas with a
 * we will solve it by adding one more mapping for this page. this mapping has to be added before the generic one
 
 ### Lecture 178 - Planning CampaignShow
+
+* we want to show header on top , campaign details on left and a button to view requests
+* on the right an input filed to enter contibution and a button to call contribute
+* we import Layout in campaings/show.js
+* we wrap out jsx with Layout components (child props)
+* we want to show contract info on the show page. we have to call 4 different calls to ethereum to get info
+* this is overkill as it will introduce delay in rendering. we will make one call in the contract to view all params at once
+
+### Lecture 179 - Redeploying CampaignFactory
+
+* we will see how we can make a chang ein contract and redeploy it
+* in ethereum/contracts folder we modify Campaign.sol adding 2 functions to the Campaign contract
+```
+    function getSummary() public view returns (
+        uint, uint,uint,uint,address
+        ) {
+        return (
+            minimumContribution,
+            this.balance,
+            requests.length,
+            approversCount,
+            manager
+        );
+    }
+
+    function getRequestsCount() public view returns (uint) {
+        return requests.length;
+    }
+```
+* we will now redeploy the campaign factory and forget about the old instance
+* we kill the server
+* we will manually do compile `node compile.js`. it drops the build folder and recreates it
+* we run the deploy dcript `node deploy.js`
+
+### Lecture 180 - CampaignShow's GetInitialProps
+
+* our contract was deployed in 0x45533D75EEd35AC9d710191D473E8E5Ab4EE7b90
+* we replace address in factory.js
+* we restart the server, go to the homepage and create a new campaign in the newly deployed factory
+* we need the GetInitalProps method to render remotely fetched data in our page. we used it in index.js
+* as in normal React routing the param that calls apage in our case :address is passed as prop `props.query.address` w pass props into the getInitialProps and extr4act the address of campaign to uses it to fetch the data from teh deployes campaign contract
+
+### Lecture 181 - Accesing a Cmapaign
+
+* we neeed to fetch a JS object like it is done in factory.js for campaign factory
+* we make a  campaign.js to place our code there and make it reusable. to do so we need to write a wapper functionthat will get the address and use it to create a JS instance
+```
+export default (address) => {
+	return new web3.eth.Contract(
+		JSON.parse(Campaign.interface),address);
+};
+```
+* we import it to show.js and use it in getinitporps
+```
+const campaign = Campaign(props.query.address);
+const summary = await campaign.methods.getSummary().call();
+```
+* we console log summary. it is a JSON object with the return values keys beign index numbers
+
+### Lecture 182 - Summary Translation Layer
+
+* we extract the params in th return object
+```
+		return {
+			minimumControbution: summary[0],
+			balance: summary[1],
+			requestsCount: summary[2],
+			approversCount: summary[3],
+			manager: summary[4]
+		};
+```
+### Lecture 183 - Custom Card Groups
+
+* we have the info so we are ready to render them on screen
+* we will use Semantict-Ui  card-group component
+* we have to make an items array with anonymous objects with headr,description,meta params and then pass it to the Card.Group as prop
+* we implement the renderCard method 
+* we use the style property to pass semantic-ui specific styling options
+```
+	renderCards() {
+		const {
+			balance,
+			manager,
+			minimumContribution,
+			requestsCount,
+			approversCount
+		} = this.props;
+
+		const items = [
+			{
+				header: manager,
+				meta: 'Address of Manager',
+				description: 'The manager created this campaign and can create requests to wqithdraw money',
+				style: {overflowWrap: 'break-word'}
+
+			}
+		];
+
+		return <Card.Group items={items}/>;	
+	}
+```
+
+### Lecture 184 - One Card Per Property
+
+* just adding more info objkects to the list
+
+### Lecture 185 - The Contribute Form
+
+* we want to show the form for contributing to a campaign in many places.
+* we will make a separate reusable component for this form, we call it COntributeForm
+* we make it a class based react component
+* we will cp most of the new campaign form (input, button, sppinner et al)
+* we flesh out the redner method with boilerplate semantic-ui from code cped from new.js page.
+* we import it into show.js and render it
+
+### Lecture 186 - Grid Layouts
+
+* we will see how to use semantic-ui to layout components on screen
+* semantic-ui => grid => column-width
+* we import grid component in page and use boilerplate code from semantic-ui react
+* we pass column width as prop to grid column (total width = 16)
+```
+				<Grid>
+					<Grid.Column width={10}>
+```
+
+### Lecture 187 - Form State
+
+* we add state to the form (same as new.js form code)
+* we add the event handlers.
+* we need to get the campaign address in the submit handler to use it in ethereum transaction
+
+### Lecture 188 - Communicating the Campaign Address
+
+* we will pass the address as a prop from CampaignShow => ContributeForm
+* this address is retrieved in the getInitialProps method so we add it to the return object to become available as a prop in the parent component `address: props.query.address,`
+* according to tutor query address is not available in the component after initialization thats why we have to sabve it as a normal prop
+* we pass it to form component `<ContributeForm address={this.props.address}/>`
+* we use it in the handler to get an instance (JS) of the deployed contract (like in show.js)
+
+### Lecture 189 - Making a Contribution
+
+* we will copy the try catch and loading state var to implement the spinner with semantic-ui
+* we need an account for the transaction so we import web3 to grab it
+* the code inb try block is
+```
+const accounts = await web3.eth.getAccounts();
+			await campaign.methods.contribute().send({
+				from: accounts[0],
+				value: web3.utils.toWei(this.state.value,'ether')
+			});
+```
+* we test it and SUCCESS
+
+### Lecture 190 - Refreshing Contract Data
+
+* our page does not update. to see the new status of the contract we need to manual refresh
+* we wabt to automatize this
+* in next.js its not easy so we will use the router to refresh the page after the transaction completes
+* we used this trick in new.js `Router.pushRoute('/');` this time we will refresh
+* pushRoute creates a new enbtry in browser history, we will use reploaceRoute `Router.replaceRoute(`/campaigns/${this.props.address}`);`
+
+### Lecture 191 - Spinners and Error Handlers
+
+* spinner and error message is same as in new.js
+* we add them to state
+
