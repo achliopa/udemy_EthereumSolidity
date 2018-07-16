@@ -2686,5 +2686,41 @@ const accounts = await web3.eth.getAccounts();
 ### Lecture 191 - Spinners and Error Handlers
 
 * spinner and error message is same as in new.js
-* we add them to state
+* we add them to state and controle their state in handler
 
+### Lecture 192 - Listing Requests
+
+* we will add a link in the bottom of the page so that the user can view the open requests. the path will be */campaigns/:address/requests*
+* we will use the Link tag from routes that we have used before in header `import { Link } from '../../routes';`
+* we import Button from semantic ui to visualize it and add it to render 
+```
+<Link route={`/campaigns/${this.props.address}/requests`}>
+	<a>
+		<Button primary>View Requests</Button>
+	</a>
+</Link>
+```
+* we need to add the new route in router.js and add the page source file
+* the source file will follow the next.js convention. we will add a folder *requests* in campaigns folder and add two new files. new.js and index.js
+* we implement the index page for Requesets List as a boilerplate React class component
+* in routes.js we add one more route `.add('/campaigns/:address/requests','/campaigns/requests/index');`
+
+### Lecture 193 - Grids vs Columns
+
+* we want to add a bit of margin over the button
+* we will solve it with semantic-ui-react => grid => rows 
+* we will wrap Columns with Grid.Row and add anew row for Link
+* button is out of bounds so we need to put it in a column
+
+### Lecture 194 - More Routing
+
+* we need to implement the REquestList page
+* we need header a table and a button
+* we start from button then the new page (to create request) and then back to list to view the table
+* we import layout for the header and wrap our jsx
+* we will implement a link button. we import button adn link from routes
+* we need to build the link so we need the address as a prop in RequestList component. we will get it in getInitalProps function and get it from props.query.address (from url) and pass it to props 
+* we use it in link button `<Link route={`/campaigns/${this.props.address}/requests/new`}>`
+* we flesh out this page file with builerplate react component, we also add it to routes.js  `.add('/campaigns/:address/requests/new','/campaigns/requests/new');`
+
+### Lecture 195 - 
