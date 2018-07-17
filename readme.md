@@ -2761,7 +2761,7 @@ const accounts = await web3.eth.getAccounts();
 * instead of looping through the counter and issuing the calls to contract for fetching the request info 1by1 we will send them all in one go and tehn wait for them to return (using promise.all)
 ```
 const requests = await Promise.all(
-			Array(parseInt(requestCount)).fill().map((element, index) => {
+			Array(requestCount).fill().map((element, index) => {
 				return campaign.methods.requests(index).call();
 			})
 		);
@@ -2770,5 +2770,66 @@ const requests = await Promise.all(
 * Array(size).fill() is a way to fill an element of an array of size x with elements using callabcks if i chain a map() function
 
 ### Lecture 202 - Rendering a Table
+
+* we will use semantic-ui-react => collection -> table. we check the sample code at docs
+* we import Table destructure it ad use it in JSX to render header
+
+### Lecture 203 - Request Row Component
+
+* we will use a separate REact Component for the Row to not bloat our code
+* it will be reusable so in /components and called RequestRow
+* it will be class based as it will have state (hosting the approval button)
+* we import it in request list fsource file
+* we add a helper method to render a request row component. using map on the props array and passing props to the new component
+```
+	renderRows() {
+		return this.props.requests.map((request,index) => {
+			return (
+				<RequestRow 
+					key={index}
+					request={request}
+					address={this.props.address}
+				/>
+			);
+		});
+	}
+```
+* we call the renderhelper in the Body tag in jsx
+
+### Lecture 204 - Request Row Content
+
+* we import semantic-Ui-react Table, and web3 to do currency conversion
+* we implement the render() method adding tags to impement the row we use variables passed as props
+
+### Lecture 205 - Approvers Count Cell
+
+* for approval count we need 2 numbers the total and the people that have approved
+* the people that approved is a param of the request, the total num of approves is a param of the campaign so we need it. no need to go back to the network using getinital props func. this number is available at requestlist page as a prop amd pass it as a prop to the requestrow
+
+### Lecture 207 - Approving a Request
+
+* we want to render a button for approve.
+* we add an event handler *onApprrove* we make it async as we will call a contract transaction to approve the request *approveRequest*
+* we implement it and test it (no rerendering)
+* if we see insufficient gas in metamask it means we have not donated to the campaign yet. so we refresh
+
+### Lecture 207 - Finalizing Requests
+
+* we add the finalize button with the eventhandler asn async arrow func like before calling a different contract method
+* we test it and we get an error in metamask submission form as the transaction will fail. (requirement for 50% of votes is not met)
+
+### Lecture 208 - Testing Finalization
+
+* we create a new campaign and request to test finalization
+* we see two issues. if we hard code the url it does not get passed to router so it does not weork porperly
+* an empty list of requests throuws exception
+
+### Lecture 209 - Row Status Highlight
+
+* we will hide the button from requests that have finalized
+* also want to highlight row green when is ready for finalization
+* we add ternary statement on request.complete boolean to render on condition parts of the row jsx
+
+### Lecture 210 - Finishing Requests Index
 
 * 
