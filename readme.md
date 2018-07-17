@@ -2723,4 +2723,52 @@ const accounts = await web3.eth.getAccounts();
 * we use it in link button `<Link route={`/campaigns/${this.props.address}/requests/new`}>`
 * we flesh out this page file with builerplate react component, we also add it to routes.js  `.add('/campaigns/:address/requests/new','/campaigns/requests/new');`
 
-### Lecture 195 - 
+### Lecture 195 - Request Creation Form
+
+* after changing routes we need to restart server (it takes effect in client but not in server)
+* in requestnew we need to implement a form to enter the request info (description, amount, recipient) + the action button
+* the form is identical like the previous 2
+* we will need the semantic-ui , campaign contract js if, the web3 to get acounts, Error and Input and we import and wrap it with Layout component
+
+### Lecture 196 - Create a Request
+
+* we will now implement the onSubmit handler which is similar to what we have done so fat on interacting with ethereum
+* we add our async call sin try catch to log the eerors with Message
+* we call `await campaign.methods.createRequest();` passign the params in the correct order (check contract solidity file)
+* we test the form by passing data, we use our metamask account2 as recipient 
+
+### Lecture 197 - Form Polish
+
+* our form is working , we add spinner, and error message like other ones
+
+### Lecture 199 - Requests One by One
+
+* we are now ready to implement the requests list page.
+* its going to have abutton to go to add request (done)
+* its going to have a table with the requests with action buttons (approve, reject)
+* in bottom will have a counter
+* tthe implementation is quite challenging.
+* we need to fetch all requests but with solidity there is no support on returning arrays of structs
+* but we have to fetch apotential big list and we would prefer it to do it in one go with one call to the contract. 
+* Solidity does not support that (yet)
+* in remix we try to do it and get an error (Recursive types NOT allowed)
+* we ca however ask for the length of the array and then ask for one by one 
+
+### Lecture 200 - Fancy Javascript
+
+* we import Campaign
+* we get the requestCount.
+* instead of looping through the counter and issuing the calls to contract for fetching the request info 1by1 we will send them all in one go and tehn wait for them to return (using promise.all)
+```
+const requests = await Promise.all(
+			Array(parseInt(requestCount)).fill().map((element, index) => {
+				return campaign.methods.requests(index).call();
+			})
+		);
+
+```
+* Array(size).fill() is a way to fill an element of an array of size x with elements using callabcks if i chain a map() function
+
+### Lecture 202 - Rendering a Table
+
+* 
